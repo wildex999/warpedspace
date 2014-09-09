@@ -11,7 +11,7 @@ import net.minecraft.world.World;
 import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.gui.NetworkAgentGui;
 import com.wildex999.warpedspace.gui.WarpedControllerGui;
-import com.wildex999.warpedspace.warpednetwork.AgentNode;
+import com.wildex999.warpedspace.warpednetwork.AgentNodeTile;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;

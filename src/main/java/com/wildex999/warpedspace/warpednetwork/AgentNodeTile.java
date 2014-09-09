@@ -19,13 +19,13 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
-public abstract class AgentNode extends BaseNodeTile implements INodeAgent, INameListener {
+public abstract class AgentNodeTile extends BaseNodeTile implements INodeAgent, INameListener {
 	
 	protected HashSet<AgentEntry> tileList; //Lookup from name
 	protected Map<String, AgentEntry> unregisteredTileList; //List of tiles currently not added to network
 	
 	
-	public AgentNode() {
+	public AgentNodeTile() {
 		currentNetwork = null;
 		currentRelay = null;
 		

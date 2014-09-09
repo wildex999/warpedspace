@@ -16,7 +16,6 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 
 import com.wildex999.utils.ModLog;
-import com.wildex999.warpedspace.proxyplayer.ProxyPlayer;
 import com.wildex999.warpedspace.tiles.TileNetworkManager;
 import com.wildex999.warpedspace.warpednetwork.AgentEntry;
 import com.wildex999.warpedspace.warpednetwork.BaseNodeTile;

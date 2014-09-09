@@ -20,7 +20,7 @@ import com.wildex999.warpedspace.items.ItemNetworkCard;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.MessageNetworkAgentUpdate;
 import com.wildex999.warpedspace.networking.MessageNetworkManagerUpdate;
-import com.wildex999.warpedspace.warpednetwork.AgentNode;
+import com.wildex999.warpedspace.warpednetwork.AgentNodeTile;
 import com.wildex999.warpedspace.warpednetwork.BlockPosition;
 import com.wildex999.warpedspace.warpednetwork.CoreNetworkManager;
 import com.wildex999.warpedspace.warpednetwork.INetworkRelay;
@@ -39,7 +39,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockAccess;
 
-public class TileNetworkAgent extends AgentNode implements IPreTickOneShotListener, IGuiWatchers {
+public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotListener, IGuiWatchers {
 	private static final Random rand = new Random();
 	private BlockNetworkAgent block;
 	private AgentEntry[] entries = new AgentEntry[sideCount]; //Internal ID for each direction(-1 if not joined)
