@@ -1,0 +1,24 @@
+Mod Idea:
+
+Customized armor.
+
+Able to place stuff on a armor to make it look different.
+Craft parts(Like spikes, plates etc.)
+Find parts(In Dungeons, chests etc.)
+Get parts(From bosses, mobs etc.)
+
+
+Warped Space tool
+-Glassbreaker(Hammer eller lyd?)
+Breaks any glass connected to the glass you hit within range.
+
+
+Boss idea-
+-Transported to dimension.
+-Room with insta death below a 3 deep floors.
+-Holes here and there players can fall through.
+- Enemies spawning now and then who eats the floors(And any blocks placed by players)
+- The more blocks, the more of them are spawned(To combat players placing)
+- THe lower the boss is in health, the more spawn.
+- Boss does percentage of damage that the highest player does to him.
+- Boss has 5 stages. Each stage will add armour compareable to the damage output of the players
