@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.MessageOpenTileGui;
-import com.wildex999.warpedspace.proxyplayer.ProxyInfo;
 import com.wildex999.warpedspace.tiles.IPreTickOneShotListener;
 
 import cpw.mods.fml.common.Mod.EventHandler;
@@ -47,21 +46,6 @@ public class TickHandler {
 				GuiHandler.previousGui = null;
 			}
 	}
-	
-	/*@SubscribeEvent
-	public void onPlayerPreTick(PlayerTickEvent event) {
-		ProxyInfo proxy = ProxyInfo.getPlayerProxy(event.player);
-		
-		//Stop container from closing due to player being far away
-		if(event.phase == Phase.START)
-		{
-			proxy.container = event.player.openContainer;
-			event.player.openContainer = null;
-		} else if(event.phase == Phase.END) {
-			proxy.player.openContainer = proxy.container;
-			proxy.container = null;
-		}
-	}*/
 	
 	public static void registerListener(IPreTickOneShotListener listener)
 	{
