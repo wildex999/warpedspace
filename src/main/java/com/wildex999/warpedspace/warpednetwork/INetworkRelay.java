@@ -24,7 +24,7 @@ package com.wildex999.warpedspace.warpednetwork;
 
 public interface INetworkRelay extends INode {
 	
-	//Add a node to the given network. Called by any node who wan't to join the
+	//Add a node to the given network. Called by any node who want to join the
 	//network, using this as their relay.
 	//Can deny Node by not adding it and returning false.
 	//Return true once node has been added.

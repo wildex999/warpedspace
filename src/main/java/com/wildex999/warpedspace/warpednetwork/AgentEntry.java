@@ -14,7 +14,7 @@ public class AgentEntry {
 	public int x, y, z;
 	public World world;
 	public String name;
-	public INodeAgent agent;
+	public INetworkAgent agent;
 	public long gid; //Global tile id. Saved on world save to indicate the agent slot. Stays the same as long as the agent or tile isn't removed.
 	public boolean active; //False if the entry is not added on the network(For example due to name collision)
 	
@@ -23,7 +23,7 @@ public class AgentEntry {
 		this.active = false;
 	}
 	
-	public AgentEntry(Block block, World world, int x, int y, int z, String name, INodeAgent agent) {
+	public AgentEntry(Block block, World world, int x, int y, int z, String name, INetworkAgent agent) {
 		this.block = block;
 		this.x = x;
 		this.y = y;

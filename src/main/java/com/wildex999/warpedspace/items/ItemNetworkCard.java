@@ -9,6 +9,7 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
 
 public class ItemNetworkCard extends ItemBase {
 	public static final String itemName = "Network Card";
@@ -24,9 +25,9 @@ public class ItemNetworkCard extends ItemBase {
 		int networkId = getNetworkId(itemStack);
 		WarpedNetwork network = CoreNetworkManager.getInstance(player.worldObj).networks.get(networkId);
 		if(network == null)
-			tooltipList.add("Network: <No Network>");
+			tooltipList.add("Network: " + EnumChatFormatting.RED + "<No Network>");
 		else
-			tooltipList.add("Network: " + network.name);
+			tooltipList.add("Network: " + EnumChatFormatting.GREEN + network.name);
 	}
 	
 	public static int getNetworkId(ItemStack itemStack) {

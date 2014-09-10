@@ -2,6 +2,7 @@ package com.wildex999.warpedspace;
 
 import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.blocks.BlockLibrary;
+import com.wildex999.warpedspace.gui.BasicNetworkRelayGui;
 import com.wildex999.warpedspace.gui.NetworkAgentGui;
 import com.wildex999.warpedspace.gui.NetworkInterfaceGui;
 import com.wildex999.warpedspace.gui.NetworkManagerGui;
@@ -18,6 +19,7 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.FMLLog;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
+import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStoppedEvent;
@@ -37,6 +39,9 @@ public class WarpedSpace {
     public static WarpedSpace instance;
     public GuiHandler guiHandler;
     public NetworkSaveHandler networkSaveHandler;
+    
+    @SidedProxy(clientSide="com.wildex999.warpedspace.ClientProxy")
+    public static CommonProxy proxy; 
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event)
@@ -61,6 +66,7 @@ public class WarpedSpace {
     	guiHandler.setGuiHandler(WarpedControllerGui.GUI_ID, new WarpedControllerGui());
     	guiHandler.setGuiHandler(NetworkAgentGui.GUI_ID, new NetworkAgentGui());
     	guiHandler.setGuiHandler(NetworkInterfaceGui.GUI_ID, new NetworkInterfaceGui());
+    	guiHandler.setGuiHandler(BasicNetworkRelayGui.GUI_ID, new BasicNetworkRelayGui());
     	
     	networkSaveHandler = new NetworkSaveHandler();
     	
@@ -71,6 +77,8 @@ public class WarpedSpace {
     	FMLCommonHandler.instance().bus().register(this);
     	FMLCommonHandler.instance().bus().register(CoreNetworkManager.serverNetworkManager);
     	FMLCommonHandler.instance().bus().register(new TickHandler());
+    	
+    	proxy.registerRenderers();
     	
     	ModLog.logger.info("Warped Space initialized!");
     }

@@ -7,6 +7,6 @@ package com.wildex999.warpedspace.warpednetwork;
 
 public interface IEntryListener {
 	//Return true to be removed from listener list
-	public boolean onEntryAvailable(String name);
-	public boolean onEntryUnavailable(String name);
+	public boolean onEntryAvailable(long gid);
+	public boolean onEntryUnavailable(long gid);
 }

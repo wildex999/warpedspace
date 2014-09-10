@@ -1,6 +1,7 @@
 package com.wildex999.warpedspace.tiles;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -25,7 +26,7 @@ import com.wildex999.warpedspace.warpednetwork.BlockPosition;
 import com.wildex999.warpedspace.warpednetwork.CoreNetworkManager;
 import com.wildex999.warpedspace.warpednetwork.INetworkRelay;
 import com.wildex999.warpedspace.warpednetwork.INode;
-import com.wildex999.warpedspace.warpednetwork.INodeAgent;
+import com.wildex999.warpedspace.warpednetwork.INetworkAgent;
 import com.wildex999.warpedspace.warpednetwork.AgentEntry;
 import com.wildex999.warpedspace.warpednetwork.WarpedNetwork;
 
@@ -44,10 +45,11 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	private BlockNetworkAgent block;
 	private AgentEntry[] entries = new AgentEntry[sideCount]; //Internal ID for each direction(-1 if not joined)
 	
-	private List<EntityPlayer> watchers;
+	private HashSet<EntityPlayer> watchers;
 	
 	//Stored/Synced
 	private String nameList[] = new String[sideCount]; //If name is stored, but idList has it at -1 that means the name is set, but not added to network.
+	private long gidList[] = new long[sideCount]; //Gid's for initial load
 	
 	//Tile Direction Index
 	public static final byte NORTH = 0;
@@ -66,7 +68,7 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 			entries[i] = null;
 			nameList[i] = null;
 		}
-		watchers = new ArrayList<EntityPlayer>();
+		watchers = new HashSet<EntityPlayer>();
 	}
 	
 	//Send GUI update to player.
@@ -87,11 +89,15 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 			//Get Item or Block name
 			AgentEntry entry = entries[i];
 			String tileName = "";
+			byte tileMeta = 0;
 			if(entry != null && i != sideCount-1) //No need to send the name of the agent
+			{
 				tileName = BlockItemName.get(entry.block, entry.world, entry.x, entry.y, entry.z);
+				tileMeta = (byte)entry.world.getBlockMetadata(entry.x, entry.y, entry.z);
+			}
 			
 			boolean active = (name.length() != 0 && entries[i] != null && entries[i].active);
-			tiles[i] = new NetworkAgentGui.TileState(name, tileName, active);
+			tiles[i] = new NetworkAgentGui.TileState(name, tileName, tileMeta, active);
 		}
 		
 		
@@ -188,6 +194,8 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		
 		if(newTile == null) //Remove tile
 		{
+			//TODO: Make it optional whether to reuse gid when destroying block(Toggle)
+			gidList[side] = oldEntry.gid;
 			ModLog.logger.info("RemoveTile: " + oldTile);
 			removeTile(side);
 			return;
@@ -196,7 +204,9 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		if(oldTile == null) //Setting new tile
 		{
 			ModLog.logger.info("New Tile: " + newTile.block);
-			ReturnMessage ret = addTile(nameList[side], newTile, side);
+			long prevGid = gidList[side];
+			gidList[side] = (long)-1; //Only use stored gid once
+			ReturnMessage ret = addTile(nameList[side], newTile, side, prevGid);
 			if(ret != ReturnMessage.TileAdded)
 				ModLog.logger.info("Failed: " + ret + " with name: " + nameList[side]);
 			return;
@@ -204,8 +214,9 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		else //Replacing existing tile
 		{
 			ModLog.logger.info("Old tile: " + oldTile + " | new tile: " + newTile.block);
+			long oldGid = oldEntry.gid; //Reuse gid when blocks are replaced(State change for Furnace etc.)
 			removeTile(side);
-			ReturnMessage ret = addTile(nameList[side], newTile, side);
+			ReturnMessage ret = addTile(nameList[side], newTile, side, oldGid);
 			if(ret != ReturnMessage.TileAdded)
 				ModLog.logger.info("Failed: " + ret + " with name: " + nameList[side]);
 			return;
@@ -214,10 +225,11 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	
 	//Set the tile with the given name for direction
 	//If the name is empty or null, it will generate a default name.
+	//If gid is set > 0, it will be re-used on the new AgentEntry.
 	//Returns:
 	//TileAdded - The tile was added to the Agent and network
 	//TileAlreadyAdded - A tile has already been added for this side
-	private ReturnMessage addTile(String name, BlockPosition block, int dirIndex) {
+	private ReturnMessage addTile(String name, BlockPosition block, int dirIndex, long gid) {
 		ReturnMessage ret;
 		AgentEntry entry = entries[dirIndex];
 		
@@ -230,6 +242,8 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		nameList[dirIndex] = name; //Always update the name
 		
 		entry = new AgentEntry();
+		if(gid > 0)
+			entry.gid = gid;
 		ret = setTile(name, block.block, worldObj, block.x, block.y, block.z, entry);
 		
 		entries[dirIndex] = entry;
@@ -256,7 +270,7 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		
 		if(tile != null)
 		{
-			if(tile instanceof INodeAgent)
+			if(tile instanceof INetworkAgent)
 				type = "Agent_";
 			else if(tile instanceof INetworkRelay)
 				type = "Relay_";
@@ -306,12 +320,16 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	
 	@Override
 	public void validate() {
+		if(worldObj.isRemote)
+			return;
 		super.validate();
 		TickHandler.registerListener(this);
 	}
 	
 	@Override
 	public void invalidate() {
+		if(worldObj.isRemote)
+			return;
 		super.invalidate();
 		leaveNetwork();
 	}
@@ -331,41 +349,41 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	@Override
 	public void readFromNBT(NBTTagCompound data) {
 		super.readFromNBT(data);
-		nameList[NORTH] = data.getString("northName");
-		nameList[SOUTH] = data.getString("southName");
-		nameList[WEST] = data.getString("westName");
-		nameList[EAST] = data.getString("eastName");
-		nameList[TOP] = data.getString("topName");
-		nameList[BOTTOM] = data.getString("bottomName");
+		
+		for(int i=0; i < sideCount; i++)
+		{
+			//Name
+			nameList[i] = data.getString("nameSide" + i);
+			
+			//GID
+			String key = "gidSide" + i;
+			if(data.hasKey(key))
+				gidList[i] = data.getLong(key);
+			else
+				gidList[i] = (long)-1;
+		}
 	}
 	
 	@Override
 	public void writeToNBT(NBTTagCompound data) {
 		super.writeToNBT(data);
 		
-		String name = nameList[NORTH];
-		if(name != null && name.length() != 0)
-			data.setString("northName", name);
-		
-		name = nameList[SOUTH];
-		if(name != null && name.length() != 0)
-			data.setString("southName", name);
-		
-		name = nameList[WEST];
-		if(name!= null && name.length() != 0)
-			data.setString("westName", name);
-		
-		name = nameList[EAST];
-		if(name != null && name.length() != 0)
-			data.setString("eastName", nameList[EAST]);
-		
-		name = nameList[TOP];
-		if(name != null && name.length() != 0)
-			data.setString("topName", name);
-		
-		name = nameList[BOTTOM];
-		if(name != null && name.length() != 0)
-			data.setString("bottomName", name);
+		for(int i=0; i < sideCount; i++)
+		{
+			//Name
+			String name = nameList[i];
+			if(name != null && name.length() != 0)
+				data.setString("nameSide" + i, name);
+			
+			//GID
+			AgentEntry entry = entries[i];
+			String key = "gidSide" + i;
+			if(entry != null)
+				data.setLong(key, entry.gid);
+			else
+				data.setLong(key, gidList[i]);
+		}
+
 	}
 
 	@Override

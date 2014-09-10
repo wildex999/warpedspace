@@ -18,7 +18,7 @@ import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.warpednetwork.MessageSCNetworkList;
 import com.wildex999.warpedspace.networking.warpednetwork.MessageSCNetworkList.NetworkInfo;
 import com.wildex999.warpedspace.warpednetwork.CoreNetworkManager;
-import com.wildex999.warpedspace.warpednetwork.INodeAgent;
+import com.wildex999.warpedspace.warpednetwork.INetworkAgent;
 import com.wildex999.warpedspace.warpednetwork.AgentEntry;
 import com.wildex999.warpedspace.warpednetwork.WarpedNetwork;
 
@@ -51,11 +51,13 @@ public class MessageTilesList extends MessageBase {
 		
 		for(int i=0; i < entryCount; i++)
 		{
+			long gid = buf.readLong();
 			String entryName = ByteBufUtils.readUTF8String(buf);
 			String tileName = ByteBufUtils.readUTF8String(buf);
+			byte tileMeta = buf.readByte();
 			boolean active = buf.readBoolean();
 			
-			entryList.add(new MessageEntry(entryName, tileName, active));
+			entryList.add(new MessageEntry(entryName, tileName, tileMeta, gid, active));
 		}
 	}
 
@@ -73,10 +75,12 @@ public class MessageTilesList extends MessageBase {
 			String name = entry.getKey();
 			boolean enabled = tile.agent.isNetworkReachable();
 			
+			buf.writeLong(tile.gid);
 			ByteBufUtils.writeUTF8String(buf, name);
+			
 			String blockName = BlockItemName.get(tile.block, tile.world, tile.x, tile.y, tile.z);
-				
 			ByteBufUtils.writeUTF8String(buf, blockName);
+			buf.writeByte(tile.world.getBlockMetadata(tile.x, tile.y, tile.z));
 			buf.writeBoolean(enabled);
 		}
 		
@@ -102,7 +106,7 @@ public class MessageTilesList extends MessageBase {
         	NetworkInterfaceGui.GUI interfaceGui = (NetworkInterfaceGui.GUI)screen;
         	interfaceGui.autoUpdateTileList(false);
         	for(MessageEntry entry : message.entryList)
-        		interfaceGui.addTile(entry.entryName, entry.tileName, entry.enabled);
+        		interfaceGui.addTile(entry.entryName, entry.tileName, entry.tileMeta, entry.gid, entry.enabled);
         	
         	interfaceGui.updateTileList();
         	interfaceGui.autoUpdateTileList(true);
@@ -114,12 +118,16 @@ public class MessageTilesList extends MessageBase {
 	protected class MessageEntry {
 		public String entryName;
 		public String tileName;
+		public byte tileMeta;
+		public long gid;
 		public boolean enabled;
 		
-		public MessageEntry(String entryName, String tileName, boolean enabled) {
+		public MessageEntry(String entryName, String tileName, byte tileMeta, long gid, boolean enabled) {
 			this.entryName = entryName;
 			this.tileName = tileName;
+			this.tileMeta = tileMeta;
 			this.enabled = enabled;
+			this.gid = gid;
 		}
 	}
 }

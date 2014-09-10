@@ -20,11 +20,11 @@ import com.wildex999.warpedspace.tiles.TileNetworkController;
 import com.wildex999.warpedspace.tiles.TileNetworkAgent;
 
 public class BlockNetworkController extends BlockBase {
-public final String name = "Network Controller";
+	public final String name = "Network Controller";
 	
 	public BlockNetworkController()
 	{
-		this.setBlockName(WarpedSpace.MODID + ":" + name);
+		this.setBlockName(name);
 		this.setHardness(1f);
 		this.setResistance(3f);
 		this.setCreativeTab(CreativeTabs.tabBlock);
@@ -47,15 +47,6 @@ public final String name = "Network Controller";
 	}
 	
 	@Override
-		public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase entity, ItemStack item) {
-			//TODO: Send packet to set owner of TE.
-			if(world.isRemote)
-				ModLog.logger.info("onBlockPlacedBy: Client");
-			else
-				ModLog.logger.info("onBlockPlacedBy: Server");
-		}
-	
-	@Override
     public boolean onBlockActivated(World world, int blockX, int blockY, int blockZ, EntityPlayer player, int side, float offX, float offY, float offZ)
     {
 		player.openGui(WarpedSpace.instance, WarpedControllerGui.GUI_ID, world, blockX, blockY, blockZ);
@@ -70,5 +61,15 @@ public final String name = "Network Controller";
 			dropInventory(tile, world, x, y, z);
 		
 		super.breakBlock(world, x, y, z, block, metadata);
+	}
+	
+	@Override
+	public int getRenderType() {
+		return 998;
+	}
+	
+	@Override
+	public boolean renderAsNormalBlock() {
+		return false;
 	}
 }

@@ -19,7 +19,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
-public abstract class AgentNodeTile extends BaseNodeTile implements INodeAgent, INameListener {
+public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgent, INameListener {
 	
 	protected HashSet<AgentEntry> tileList; //Lookup from name
 	protected Map<String, AgentEntry> unregisteredTileList; //List of tiles currently not added to network
@@ -62,15 +62,15 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INodeAgent, 
 			{
 				if(entry == null)
 					continue;
-				currentNetwork.removeTile(entry.name, entry);
+				currentNetwork.removeTile(entry);
 				entry.active = false;
 			}
+			tileList.clear();
 			for(Map.Entry<String, AgentEntry> entry : unregisteredTileList.entrySet())
 				currentNetwork.unregisterNameListener(entry.getValue().name, this);
 			unregisteredTileList.clear();
 		}
 		
-		super.leaveNetwork();
 		
 		onLeftNetwork();
 	}
@@ -99,7 +99,6 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INodeAgent, 
 		newEntry.z = z;
 		newEntry.name = name;
 		newEntry.agent = this;
-		newEntry.gid = 1; //TODO: Generate unique gid
 		tileList.add(newEntry);
 		
 		ReturnMessage addReturn = addToNetwork(newEntry);
@@ -165,7 +164,7 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INodeAgent, 
 				return ReturnMessage.InternalError;
 			} else if(netRet == ReturnMessage.TileNameTaken) 
 			{
-				currentNetwork.removeTile(oldName, entry);
+				currentNetwork.removeTile(entry);
 				entry.active = false;
 				//Add as listener for the new name
 				unregisteredTileList.put(newName, entry);
@@ -176,8 +175,6 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INodeAgent, 
 		}
 		else
 			ret = ReturnMessage.RenamedLocal;
-		
-		entry.name = newName;
 		
 		onTileRenamed(entry, oldName);
 		
@@ -195,7 +192,7 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INodeAgent, 
 		if(currentNetwork != null)
 		{	
 			if(entry.active)
-				currentNetwork.removeTile(entry.name, entry);
+				currentNetwork.removeTile(entry);
 			else
 			{
 				currentNetwork.unregisterNameListener(entry.name, this);

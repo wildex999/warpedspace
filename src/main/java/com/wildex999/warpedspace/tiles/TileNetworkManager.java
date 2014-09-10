@@ -1,5 +1,6 @@
 package com.wildex999.warpedspace.tiles;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import net.minecraft.client.renderer.texture.Stitcher.Slot;
@@ -29,12 +30,12 @@ public class TileNetworkManager extends BaseNetworkInventoryTile implements IGui
 	
 	public WarpedNetwork currentNetwork;
 	public boolean writeNetworkCard;
-	private List<EntityPlayer> watchers;
+	private HashSet<EntityPlayer> watchers;
 	
 	public TileNetworkManager() {
 		inventoryName = "Network Manager";
 		writeNetworkCard = false;
-		watchers = new ArrayList<EntityPlayer>();
+		watchers = new HashSet<EntityPlayer>();
 	}
 	
 	public void setCurrentNetwork(WarpedNetwork network) {
@@ -249,11 +250,6 @@ public class TileNetworkManager extends BaseNetworkInventoryTile implements IGui
 			
 			Integer networkId = data.getInteger("networkId");
 			currentNetwork = networkManager.networks.get(networkId);
-			ModLog.logger.info("Read network: " + currentNetwork.id);
-		}
-		else
-		{
-			ModLog.logger.info("Key not found");
 		}
 		writeNetworkCard = data.getBoolean("writeNetworkCard");
 		

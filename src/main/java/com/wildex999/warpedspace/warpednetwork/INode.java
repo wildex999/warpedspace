@@ -63,7 +63,7 @@ public interface INode {
 	//Called when the Relay has recovered it's connection to the network controller.
 	public void eventNetworkReconnect();
 	
-	//Called when the network no loner has any power.
+	//Called when the network no longer has any power.
 	//No actions should be allowed.
 	public void eventNetworkNoPower();
 	

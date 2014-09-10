@@ -21,12 +21,12 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 public class MessageCSInterfaceUpdate extends MessageBase {
 	protected TileEntityInfo tile;
-	protected String selection;
+	protected long selection;
 	
 	//Receiver
 	public MessageCSInterfaceUpdate() {}
 	
-	public MessageCSInterfaceUpdate(TileEntity tile, String selection) {
+	public MessageCSInterfaceUpdate(TileEntity tile, long selection) {
 		this.tile = new TileEntityInfo(tile);
 		this.selection = selection;
 	}
@@ -34,13 +34,13 @@ public class MessageCSInterfaceUpdate extends MessageBase {
 	@Override
 	public void fromBytes(ByteBuf buf) {
 		tile = readTileEntity(buf);
-		selection = ByteBufUtils.readUTF8String(buf);
+		selection = buf.readLong();
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
 		writeTileEntity(buf, tile);
-		ByteBufUtils.writeUTF8String(buf, selection);
+		buf.writeLong(selection);
 	}
 	
 	public static class Handler implements IMessageHandler<MessageCSInterfaceUpdate, IMessage> {

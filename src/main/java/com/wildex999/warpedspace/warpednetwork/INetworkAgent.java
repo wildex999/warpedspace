@@ -20,7 +20,7 @@ import net.minecraft.world.World;
  * 
  */
 
-public interface INodeAgent extends INode {
+public interface INetworkAgent extends INode {
 	
 	//Get number of Tile Entities that this agent gives access to.
 	public int getTileCount();

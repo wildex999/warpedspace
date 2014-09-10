@@ -2,6 +2,7 @@ package com.wildex999.warpedspace.gui.elements;
 
 import org.lwjgl.opengl.GL11;
 
+import com.wildex999.utils.BlockItemName;
 import com.wildex999.utils.ModLog;
 
 import net.minecraft.block.Block;
@@ -18,26 +19,15 @@ public class GuiListEntryTile extends GuiListEntry{
 	protected static RenderItem itemRender = new RenderItem();
 	
 	public String tileName;
+	public long gid;
 	protected ItemStack item;
 	
-	public GuiListEntryTile(String name, String tileName) {
+	public GuiListEntryTile(String name, String tileName, byte tileMeta, long gid) {
 		super(name);
 		this.tileName = tileName;
-		ModLog.logger.info("Added tileName: " + tileName);
+		this.gid = gid;
 
-		if(tileName.length() != 0)
-		{
-			item = new ItemStack((Item)Item.itemRegistry.getObject(tileName));
-			if(item.getItem() == null)
-			{
-				Block drawBlock = Block.getBlockFromName(tileName);
-				item = new ItemStack(drawBlock);
-				if(item.getItem() == null)
-					item = null;
-			}
-		}
-		else
-			item = null;
+		item = BlockItemName.getItem(tileName, tileMeta);
 	}
 	
 	@Override

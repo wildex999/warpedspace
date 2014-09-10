@@ -46,8 +46,9 @@ public class MessageNetworkAgentUpdate extends MessageBase {
 		{
 			String name = ByteBufUtils.readUTF8String(buf);
 			String tileName = ByteBufUtils.readUTF8String(buf);
+			byte tileMeta = buf.readByte();
 			boolean active = buf.readBoolean();
-			tiles.add(new NetworkAgentGui.TileState(name, tileName, active));
+			tiles.add(new NetworkAgentGui.TileState(name, tileName, tileMeta, active));
 		}
 	}
 
@@ -59,6 +60,7 @@ public class MessageNetworkAgentUpdate extends MessageBase {
 		{
 			ByteBufUtils.writeUTF8String(buf, tile.name);
 			ByteBufUtils.writeUTF8String(buf, tile.tileName);
+			buf.writeByte(tile.tileMeta);
 			buf.writeBoolean(tile.active);
 		}
 	}

@@ -19,7 +19,7 @@ public class BlockNetworkAgent extends BlockBase {
 	
 	public BlockNetworkAgent()
 	{
-		this.setBlockName(WarpedSpace.MODID + ":" + name);
+		this.setBlockName(name);
 		this.setHardness(1f);
 		this.setResistance(3f);
 		this.setCreativeTab(CreativeTabs.tabBlock);

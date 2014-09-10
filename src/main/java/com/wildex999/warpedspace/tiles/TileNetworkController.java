@@ -40,7 +40,7 @@ public class TileNetworkController extends BaseNetworkInventoryTile implements I
 	
 	private byte tickRetry; //Retry joining network
 	private byte tickWatcherUpdate; //Update Watchers
-	private List<EntityPlayer> watchers;
+	private HashSet<EntityPlayer> watchers;
 	
 	//Stored/Synced vars
 	private String owner = "";
@@ -51,7 +51,7 @@ public class TileNetworkController extends BaseNetworkInventoryTile implements I
 		nodes = new HashSet<INode>();
 		inventoryName = "Network Controller";
 		tickRetry = 0;
-		watchers = new ArrayList<EntityPlayer>();
+		watchers = new HashSet<EntityPlayer>();
 	}
 
 	@Override
@@ -359,8 +359,7 @@ public class TileNetworkController extends BaseNetworkInventoryTile implements I
 		//TODO: Allow upgrading radius.
 		//Should not store radius directly on tileentity, but instead
 		//store the upgrade. So if upgrade value changes it will load the correct value.
-		//return 8;
-		return 10000;
+		return 8;
 	}
 
 }

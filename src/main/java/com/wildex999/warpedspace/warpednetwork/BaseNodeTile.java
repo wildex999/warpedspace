@@ -62,6 +62,9 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 			else
 				isReachable = false;
 			
+			relaySearchTicks = ticksRelaySearch;
+			updateEntity();
+			
 			return true;
 		}
 		
@@ -208,6 +211,9 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 
 	@Override
 	public void leaveNetwork() {
+		if(currentRelay != null)
+			leaveRelay();
+		
 		if(currentNetwork == null)
 			return;
 		

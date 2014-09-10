@@ -4,6 +4,7 @@ package com.wildex999.warpedspace.warpednetwork;
 //A change is defined as: Tile added, Tile removed, Tile unavailable, Tile available
 //This is usually used when Players are viewing the Tile list for a network, to keep
 //it up to date on the client.
+//Note: Renaming/Changing an entry involves a remove and re-add with changed info
 
 public interface ITileListener {
 

@@ -47,7 +47,7 @@ public class CoreNetworkManager {
 		if (networkNames.containsKey(name))
 			return -1;
 		int id = nextFreeId++;
-		WarpedNetwork newNetwork = new WarpedNetwork(id, name, owner);
+		WarpedNetwork newNetwork = new WarpedNetwork(id, 0, name, owner);
 		newNetwork.owner = owner;
 
 		networks.put(id, newNetwork);
@@ -65,14 +65,14 @@ public class CoreNetworkManager {
 	// Called client side to add network
 	@SideOnly(Side.CLIENT)
 	public void clientAddNetwork(int id, String name, String owner) {
-		WarpedNetwork newNetwork = new WarpedNetwork(id, name, owner);
+		WarpedNetwork newNetwork = new WarpedNetwork(id, 0, name, owner);
 		networks.put(id, newNetwork);
 		networkNames.put(name, id);
 	}
 
 	//Set the network for the given id. Used when loading networks.
 	//Does not send update to players.
-	public boolean setNetwork(int id, String name, String owner) {
+	public boolean setNetwork(int id, long nextFreeGid, String name, String owner) {
 		if(networks.containsKey(id))
 		{
 			ModLog.logger.warn("Trying to set network would overwrite existing: " + id + " name: " + name);
@@ -85,7 +85,7 @@ public class CoreNetworkManager {
 			return false;
 		}
 		
-		WarpedNetwork newNetwork = new WarpedNetwork(id, name, owner);
+		WarpedNetwork newNetwork = new WarpedNetwork(id, nextFreeGid, name, owner);
 		newNetwork.owner = owner;
 		
 		networks.put(id, newNetwork);

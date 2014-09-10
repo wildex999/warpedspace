@@ -22,7 +22,7 @@ import cpw.mods.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent;
 
 public class NetworkSaveHandler {
 	public static NetworkSaveHandler instance;
-	public static boolean isDirty = false;
+	public static boolean isDirty = false; //TODO: Per network dirty
 	public static boolean hasLoaded = false;
 
 	public NetworkSaveHandler() {
@@ -65,8 +65,10 @@ public class NetworkSaveHandler {
 
 			for(Map.Entry<Integer, WarpedNetwork> network : networks.entrySet())
 			{
+				ModLog.logger.info("Setting network: " + network.getValue().name + " nextFreeGid: " + network.getValue().nextFreeGid);
 				NBTTagCompound networkTag = new NBTTagCompound();
 				networkTag.setInteger("id", network.getKey());
+				networkTag.setLong("nextFreeGid", network.getValue().nextFreeGid);
 				networkTag.setString("name", network.getValue().name);
 				networkTag.setString("owner", network.getValue().owner);
 				networkTags.appendTag(networkTag);
@@ -140,10 +142,13 @@ public class NetworkSaveHandler {
 		{
 			NBTTagCompound networkTag = networkTags.getCompoundTagAt(index);
 			int id = networkTag.getInteger("id");
+			long nextFreeGid = networkTag.getLong("nextFreeGid");
 			String name = networkTag.getString("name");
 			String owner = networkTag.getString("owner");
 
-			if(!networkManager.setNetwork(id, name, owner))
+			ModLog.logger.info("Loaded network: " + name + " nextFreeGid: " + nextFreeGid);
+			
+			if(!networkManager.setNetwork(id, nextFreeGid, name, owner))
 				ModLog.logger.error("Failed to load network: " + id + " | " + name + " | " + owner);
 		}
 

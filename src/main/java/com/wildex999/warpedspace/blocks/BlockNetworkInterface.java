@@ -18,7 +18,7 @@ public class BlockNetworkInterface extends BlockBase {
 	
 	public BlockNetworkInterface()
 	{
-		this.setBlockName(WarpedSpace.MODID + ":" + name);
+		this.setBlockName(name);
 		this.setHardness(1f);
 		this.setResistance(3f);
 		this.setCreativeTab(CreativeTabs.tabBlock);
@@ -55,5 +55,20 @@ public class BlockNetworkInterface extends BlockBase {
 			dropInventory(tile, world, x, y, z);
 		
 		super.breakBlock(world, x, y, z, block, metadata);
+	}
+	
+	@Override
+	public int getRenderType() {
+		return 999;
+	}
+	
+	@Override
+	public boolean isOpaqueCube() {
+		return false;
+	}
+	
+	@Override
+	public boolean renderAsNormalBlock() {
+		return true;
 	}
 }

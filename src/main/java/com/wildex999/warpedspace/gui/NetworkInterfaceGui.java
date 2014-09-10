@@ -20,6 +20,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+import com.wildex999.utils.BlockItemName;
 import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.GuiHandler;
 import com.wildex999.warpedspace.Messages;
@@ -80,11 +81,12 @@ public class NetworkInterfaceGui implements IGuiHandler {
 		private int entryState;
 		private String entryName;
 		private String itemName;
+		private byte itemMeta;
 		private ItemStack item;
+		private long gid;
 		
-		private String selectedEntry;
+		private long selectedEntry;
 		private boolean watchingTiles;
-		private boolean initialized;
 		
 		//Main GUI
 		private GuiLabel labelContainerName;
@@ -116,26 +118,28 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			entryState = Messages.notSet;
 			entryName = "";
 			itemName = "";
+			itemMeta = 0;
+			gid = -1;
 			item = null;
 			watchingTiles = false;
 			GuiHandler.currentGuiTile = tile;
-			initialized = false;
 		}
 		
-		public void networkUpdate(int networkState, int entryState, String entryName, String entryItemName) {
+		public void networkUpdate(int networkState, int entryState, String entryName, long gid, String entryItemName, byte itemMeta) {
 			this.networkState = networkState;
 			this.entryState = entryState;
 			this.entryName = entryName;
+			this.gid = gid;
 			this.itemName = entryItemName;
+			this.itemMeta = itemMeta;
 			
 			updateGui();
 		}
 		
 		public void updateGui() {
-			if(!initialized)
+			if(labelNetworkState == null)
 				return;
-			
-			//TODO: Fix labelNetworkState being null due to coming from old gui etc.
+				
 			labelNetworkState.label = Messages.get(networkState);
 			if(networkState == Messages.online)
 				labelNetworkState.color = Messages.colorOk;
@@ -151,24 +155,11 @@ public class NetworkInterfaceGui implements IGuiHandler {
 					buttonSetTile.packedFGColour = colorOfflineTile;
 				
 				//Try to get ItemStack using item name
-				item = null;
-				if(itemName.length() != 0)
-				{
-					//Get Item from name
-					item = new ItemStack((Item)Item.itemRegistry.getObject(itemName));
-					if(item.getItem() == null)
-					{
-						//Get Item from Block using name
-						Block drawBlock = Block.getBlockFromName(itemName);
-						item = new ItemStack(drawBlock);
-						if(item.getItem() == null)
-							item = null;
-					}
-				}
+				item = BlockItemName.getItem(itemName, itemMeta);
 				
-				if(selectedEntry != null && entryName.equals(selectedEntry))
+				if(gid == selectedEntry)
 				{
-					selectedEntry = null;
+					selectedEntry = -1;
 					hideTileList();
 				}
 			}
@@ -178,7 +169,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 				buttonSetTile.packedFGColour = colorInvalidTile;
 			}
 			
-			selectedEntry = null;
+			selectedEntry = -1;
 		}
 		
 		public void showTileList() {
@@ -255,10 +246,10 @@ public class NetworkInterfaceGui implements IGuiHandler {
 		}
 		
 		//Add tile to TileList
-		public void addTile(String entryName, String tileName, boolean active) {
+		public void addTile(String entryName, String tileName, byte tileMeta, long gid, boolean active) {
 			if(tilesList == null)
 				return;
-			tilesList.addEntry(new GuiListEntryTile(entryName, tileName));
+			tilesList.addEntry(new GuiListEntryTile(entryName, tileName, tileMeta, gid));
 		}
 		
 		//Remove tile from TileList
@@ -310,9 +301,9 @@ public class NetworkInterfaceGui implements IGuiHandler {
 				networkState = oldGui.networkState;
 				entryState = oldGui.entryState;
 				entryName = oldGui.entryName;
+				gid = oldGui.gid;
 				itemName = oldGui.itemName;
 			}
-			initialized = true;
 			
 			if(showTiles)
 				showTileList();
@@ -385,8 +376,9 @@ public class NetworkInterfaceGui implements IGuiHandler {
 				{
 					if(networkState == Messages.online && entryState == Messages.online)
 					{
+						ModLog.logger.info("Send screen: " + this);
 						GuiHandler.setPreviousTileGui(this, GUI_ID, tile);
-						MessageBase messageActivate = new MessageActivate(tile, buttonSetTile.displayString);
+						MessageBase messageActivate = new MessageActivate(tile, gid);
 						messageActivate.sendToServer();
 					}
 				}
@@ -399,17 +391,18 @@ public class NetworkInterfaceGui implements IGuiHandler {
 				}
 				else if(button == buttonSelect)
 				{
-					GuiListEntry tileEntry = tilesList.selectedEntry;
+					GuiListEntry entry = tilesList.selectedEntry;
 					MessageBase messageUpdate;
-					if(tileEntry == null)
+					if(entry == null || !(entry instanceof GuiListEntryTile))
 					{
-						selectedEntry = null;
-						messageUpdate = new MessageCSInterfaceUpdate(tile, "");
+						selectedEntry = -1;
+						messageUpdate = new MessageCSInterfaceUpdate(tile, -1);
 					}
 					else
 					{
-						selectedEntry = tileEntry.name;
-						messageUpdate = new MessageCSInterfaceUpdate(tile, tileEntry.name);
+						GuiListEntryTile tileEntry = (GuiListEntryTile)entry;
+						selectedEntry = tileEntry.gid;
+						messageUpdate = new MessageCSInterfaceUpdate(tile, tileEntry.gid);
 					}
 					messageUpdate.sendToServer();
 				}
@@ -417,12 +410,16 @@ public class NetworkInterfaceGui implements IGuiHandler {
 				{
 					if(networkState == Messages.online && entryState == Messages.online)
 					{
-						GuiListEntry tileEntry = tilesList.selectedEntry;
-						if(tileEntry != null)
+						GuiListEntry entry = tilesList.selectedEntry;
+						if(entry != null)
 						{
-							GuiHandler.setPreviousTileGui(this, GUI_ID, tile);
-							MessageBase messageActivate = new MessageActivate(tile, tileEntry.name);
-							messageActivate.sendToServer();
+							if(entry instanceof GuiListEntryTile)
+							{
+								GuiListEntryTile tileEntry = (GuiListEntryTile)entry;
+								GuiHandler.setPreviousTileGui(this, GUI_ID, tile);
+								MessageBase messageActivate = new MessageActivate(tile, tileEntry.gid);
+								messageActivate.sendToServer();
+							}
 						}
 					}
 				}

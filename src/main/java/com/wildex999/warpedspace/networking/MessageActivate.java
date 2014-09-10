@@ -37,28 +37,29 @@ import io.netty.buffer.ByteBuf;
 
 public class MessageActivate extends MessageBase {
 
-	protected String activateEntry;
+	protected long activateEntry;
 	protected TileEntityInfo tile;
 	
 	//Receiver
 	public MessageActivate() {}
 	
 	
-	public MessageActivate(BaseNodeTile node, String entry) {
+	public MessageActivate(BaseNodeTile node, long entry) {
 		this.activateEntry = entry;
 		this.tile = new TileEntityInfo(node);
+		ModLog.logger.info("Send Activate with gid: " + activateEntry);
 	}
 	
 	@Override
 	public void fromBytes(ByteBuf buf) {
 		tile = readTileEntity(buf);
-		activateEntry = ByteBufUtils.readUTF8String(buf);
+		activateEntry = buf.readLong();
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
 		writeTileEntity(buf, tile);
-		ByteBufUtils.writeUTF8String(buf, activateEntry);
+		buf.writeLong(activateEntry);
 	}
 	
 	public static class Handler implements IMessageHandler<MessageActivate, IMessage> {

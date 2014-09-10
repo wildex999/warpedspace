@@ -7,6 +7,7 @@ import java.util.List;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
+import com.wildex999.utils.BlockItemName;
 import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.GuiHandler;
 import com.wildex999.warpedspace.Messages;
@@ -61,11 +62,13 @@ public class NetworkAgentGui implements IGuiHandler
 	public static class TileState {
 		public String name;
 		public String tileName;
+		public byte tileMeta;
 		public boolean active;
 		
-		public TileState(String name, String tileName, boolean active) {
+		public TileState(String name, String tileName, byte tileMeta, boolean active) {
 			this.name = name;
 			this.tileName = tileName;
+			this.tileMeta = tileMeta;
 			this.active = active;
 		}
 	}
@@ -140,21 +143,8 @@ public class NetworkAgentGui implements IGuiHandler
 				
 				if(i < TileNetworkAgent.sideCount-1)
 				{
-					String tileName = tiles.get(i).tileName;
-					if(tileName.length() != 0)
-					{
-						ItemStack item = new ItemStack((Item)Item.itemRegistry.getObject(tileName));
-						if(item.getItem() == null)
-						{
-							Block drawBlock = Block.getBlockFromName(tileName);
-							item = new ItemStack(drawBlock);
-							if(item.getItem() == null)
-								item = null;
-						}
-						renderItems.set(i, item);
-					}
-					else
-						renderItems.set(i, null);
+					TileState tile = tiles.get(i);
+					renderItems.set(i,BlockItemName.getItem(tile.name, tile.tileMeta));
 				}
 					
 				
