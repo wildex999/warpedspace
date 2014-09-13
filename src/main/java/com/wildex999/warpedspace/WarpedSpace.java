@@ -36,11 +36,13 @@ public class WarpedSpace {
     
     public static final String RESOURCEPREFIX = MODID.toLowerCase() + ":";
     
+    public static boolean isClient = false;
+    
     public static WarpedSpace instance;
     public GuiHandler guiHandler;
     public NetworkSaveHandler networkSaveHandler;
     
-    @SidedProxy(clientSide="com.wildex999.warpedspace.ClientProxy")
+    @SidedProxy(clientSide="com.wildex999.warpedspace.ClientProxy", serverSide="com.wildex999.warpedspace.CommonProxy")
     public static CommonProxy proxy; 
     
     @EventHandler
@@ -58,6 +60,9 @@ public class WarpedSpace {
     	ItemLibrary.init();
     	
     	Networking.init();
+    	
+    	if(event.getSide() == Side.CLIENT)
+    		isClient = true;
     	
     	guiHandler = new GuiHandler();
     	NetworkRegistry.INSTANCE.registerGuiHandler(this, guiHandler);

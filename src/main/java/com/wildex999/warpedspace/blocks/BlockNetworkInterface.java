@@ -7,6 +7,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
+import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.WarpedSpace;
 import com.wildex999.warpedspace.gui.NetworkAgentGui;
 import com.wildex999.warpedspace.gui.NetworkInterfaceGui;
@@ -69,6 +70,38 @@ public class BlockNetworkInterface extends BlockBase {
 	
 	@Override
 	public boolean renderAsNormalBlock() {
+		return true;
+	}
+	
+	//---REDSTONE---//
+	
+	@Override
+	public boolean canProvidePower() {
+		//Interface can provide power if we are hosting a block which can.
+		//We have no way to actually check that, so we just return true always.
+		return true;
+	}
+	
+	//We simply proxy what is provided by the host, -1 in power
+	@Override
+	public int isProvidingWeakPower(IBlockAccess world, int x,int y, int z, int dir) {
+		TileNetworkInterface tile = (TileNetworkInterface)world.getTileEntity(x, y, z);
+		if(tile == null)
+			return 0;
+		return tile.getRedstoneManager().getHostedWeakPower(dir);
+	}
+	
+	//We simply proxy what is provided by the host, -1 in power
+	@Override
+	public int isProvidingStrongPower(IBlockAccess world, int x, int y, int z, int dir) {
+		TileNetworkInterface tile = (TileNetworkInterface)world.getTileEntity(x, y, z);
+		if(tile == null)
+			return 0;
+		return tile.getRedstoneManager().getHostedStrongPower(dir);
+	}
+	
+	@Override
+	public boolean canConnectRedstone(IBlockAccess world, int x, int y, int z, int side) {
 		return true;
 	}
 }

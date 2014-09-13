@@ -85,6 +85,7 @@ public class WarpedNetwork {
 			tile.gid = -1;
 			return false;
 		}
+		tile.active = true;
 		//tile is at this point a valid entry!
 		
 		tileMap.put(tile.name, tile);
@@ -145,16 +146,37 @@ public class WarpedNetwork {
 		return ReturnMessage.Ok;
 	}
 	
+	//Inform all listeners that this entry has updated
+	public void entryUpdate(AgentEntry entry) {
+		List<IEntryListener> listenerList = entryListeners.get(entry.gid);
+		if(listenerList == null)
+			return;
+		
+		Iterator<IEntryListener> iter = listenerList.iterator();
+		while(iter.hasNext())
+		{
+			IEntryListener listener = iter.next();
+			if(listener.onEntryUpdate(entry))
+			{
+				if(listenerList.size() == 1)
+					entryListeners.remove(entry.gid);
+				else
+					iter.remove();
+			}
+		}
+	}
+	
 	public void removeTile(AgentEntry tile) {
 		String name = tile.name;
 		if(tileMap.remove(name) != null)
 		{
 			tileIdMap.remove(tile.gid);
+			tile.active = false;
+			
 			callTileNameListeners(name);
 			for(ITileListener listener: tileListeners)
 				listener.tileRemoved(tile);
 			callEntryListeners(tile.gid, false);
-			tile.gid = -1;
 		}
 	}
 	

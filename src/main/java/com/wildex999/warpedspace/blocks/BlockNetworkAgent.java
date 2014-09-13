@@ -64,5 +64,37 @@ public class BlockNetworkAgent extends BlockBase {
 		
 		super.breakBlock(world, x, y, z, block, metadata);
 	}
+	
+	@Override
+	public int getRenderType() {
+		return 996;
+	}
+	
+	@Override
+	public boolean isOpaqueCube() {
+		return false;
+	}
+	
+	@Override
+	public boolean renderAsNormalBlock() {
+		return false;
+	}
+	
+	@Override
+	public boolean canPlaceBlockOnSide(World p_149707_1_, int p_149707_2_,
+			int p_149707_3_, int p_149707_4_, int p_149707_5_) {
+		return true;
+	}
+	
+	@Override
+	public boolean canPlaceBlockAt(World p_149742_1_, int p_149742_2_,
+			int p_149742_3_, int p_149742_4_) {
+		return true;
+	}
+	
+	public boolean canPlaceTorchOnTop(World world, int x, int y, int z) {
+		return true;
+	}
+	
 
 }

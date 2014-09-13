@@ -65,4 +65,19 @@ public abstract class BlockRelayBase extends BlockBase {
 		
 		super.breakBlock(world, x, y, z, block, metadata);
 	}
+	
+	@Override
+	public int getRenderType() {
+		return 997;
+	}
+	
+	@Override
+	public boolean isOpaqueCube() {
+		return false;
+	}
+	
+	@Override
+	public boolean renderAsNormalBlock() {
+		return false;
+	}
 }

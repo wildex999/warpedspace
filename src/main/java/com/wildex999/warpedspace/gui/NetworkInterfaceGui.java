@@ -32,6 +32,7 @@ import com.wildex999.warpedspace.gui.elements.GuiList;
 import com.wildex999.warpedspace.gui.elements.GuiListEntry;
 import com.wildex999.warpedspace.gui.elements.GuiListEntryTile;
 import com.wildex999.warpedspace.inventory.ControllerContainer;
+import com.wildex999.warpedspace.inventory.InterfaceContainer;
 import com.wildex999.warpedspace.networking.MessageActivate;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.MessageWatchGui;
@@ -50,7 +51,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 	@Override
 	public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
 		TileNetworkInterface inventory = (TileNetworkInterface)world.getTileEntity(x, y, z);
-		return new ControllerContainer(player.inventory, inventory);
+		return new InterfaceContainer(player.inventory, inventory);
 	}
 
 	@Override
@@ -75,7 +76,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 		private static int colorInvalidTile = 0xFF6600;
 		
 		private TileNetworkInterface tile;
-		private ControllerContainer container;
+		private InterfaceContainer container;
 		
 		private int networkState;
 		private int entryState;
@@ -106,10 +107,10 @@ public class NetworkInterfaceGui implements IGuiHandler {
 		
 		public GUI(EntityPlayer player, TileNetworkInterface tile) {
 			//Slot positions set in ControllerContainer
-			super(new ControllerContainer(player.inventory, tile));
+			super(new InterfaceContainer(player.inventory, tile));
 			
 			this.tile = tile;
-			this.container = (ControllerContainer)inventorySlots;
+			this.container = (InterfaceContainer)inventorySlots;
 			showTiles = false;
 			if(tile == null)
 				player.closeScreen();
@@ -146,13 +147,20 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			else
 				labelNetworkState.color = Messages.colorProblem;
 			
+			buttonSetTile.displayString = defaultNoTile;
+			buttonSetTile.packedFGColour = colorInvalidTile;
+			
 			if(entryName.length() != 0)
 			{
 				buttonSetTile.displayString = entryName;
-				if(entryState == Messages.online && networkState == Messages.online)
-					buttonSetTile.packedFGColour = colorGotTile;
-				else
-					buttonSetTile.packedFGColour = colorOfflineTile;
+				
+				if(networkState == Messages.online)
+				{
+					if(entryState == Messages.online)
+						buttonSetTile.packedFGColour = colorGotTile;
+					else
+						buttonSetTile.packedFGColour = colorOfflineTile;
+				}
 				
 				//Try to get ItemStack using item name
 				item = BlockItemName.getItem(itemName, itemMeta);
@@ -162,11 +170,6 @@ public class NetworkInterfaceGui implements IGuiHandler {
 					selectedEntry = -1;
 					hideTileList();
 				}
-			}
-			else
-			{
-				buttonSetTile.displayString = defaultNoTile;
-				buttonSetTile.packedFGColour = colorInvalidTile;
 			}
 			
 			selectedEntry = -1;
@@ -183,6 +186,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			this.ySize = backgroundHeightTiles;
 			
 			inputName = new GuiTextField(mc.fontRenderer, guiLeft+8, guiTop+6, 200, 20);
+			inputName.setFocused(true); //Default focused
 			
 			tilesList = new GuiList(this, guiLeft + 8, guiTop + 30, 226, 119);
 			tilesList.entryHeight = 24;
@@ -235,7 +239,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			container.showNetworkCard(true);
 			
 			//Tell server we are no longer interested in the Tiles list
-			if(!watchingTiles)
+			if(watchingTiles)
 			{
 				MessageBase messageWatch = new MessageCSWatchList(tile, false);
 				messageWatch.sendToServer();
@@ -455,7 +459,6 @@ public class NetworkInterfaceGui implements IGuiHandler {
 		
 		@Override
 		protected void mouseClicked(int x, int y, int event) {
-			super.mouseClicked(x, y, event);
 			if(showTiles)
 			{
 				inputName.mouseClicked(x, y, event);
@@ -470,6 +473,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 					}
 				}
 			}
+			super.mouseClicked(x, y, event);
 		}
 		
 		@Override

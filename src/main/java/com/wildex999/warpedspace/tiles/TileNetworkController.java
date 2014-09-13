@@ -15,6 +15,7 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 
 import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.blocks.BlockNetworkController;
@@ -339,6 +340,11 @@ public class TileNetworkController extends BaseNetworkInventoryTile implements I
 		return false;
 	}
 
+	@Override
+	public World getWorld() {
+		return getWorldObj();
+	}
+	
 	@Override
 	public int getPosX() {
 		return xCoord;

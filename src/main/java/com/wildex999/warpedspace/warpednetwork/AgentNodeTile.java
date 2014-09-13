@@ -44,7 +44,6 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgen
 			addToNetwork(entry);
 		
 		onJoinedNetwork();
-		ModLog.logger.info("Join network");
 		
 		return true;
 	}
@@ -63,12 +62,13 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgen
 				if(entry == null)
 					continue;
 				currentNetwork.removeTile(entry);
-				entry.active = false;
 			}
-			tileList.clear();
+			
 			for(Map.Entry<String, AgentEntry> entry : unregisteredTileList.entrySet())
 				currentNetwork.unregisterNameListener(entry.getValue().name, this);
 			unregisteredTileList.clear();
+			
+			super.leaveNetwork();
 		}
 		
 		
@@ -131,7 +131,6 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgen
 		}
 		else
 		{
-			entry.active = true;
 			if(!isReachable)
 				currentNetwork.setTileUnreachable(entry);
 		}
@@ -165,7 +164,6 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgen
 			} else if(netRet == ReturnMessage.TileNameTaken) 
 			{
 				currentNetwork.removeTile(entry);
-				entry.active = false;
 				//Add as listener for the new name
 				unregisteredTileList.put(newName, entry);
 				currentNetwork.registerNameListener(newName, this);
@@ -188,7 +186,7 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgen
 		
 		if(!tileList.remove(entry))
 			return false;
-
+		
 		if(currentNetwork != null)
 		{	
 			if(entry.active)
@@ -199,9 +197,10 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgen
 				unregisteredTileList.remove(entry.name);
 			}
 		}
+		entry.invalidate();
+		//Entry is at this point invalid
 		
 		onTileRemoved(entry);
-		entry.invalidate();
 		
 		return true;
 	}
@@ -234,14 +233,20 @@ public abstract class AgentNodeTile extends BaseNodeTile implements INetworkAgen
 		if(currentNetwork == null)
 			return;
 		for(AgentEntry entry : tileList)
+		{
 			currentNetwork.setTileUnreachable(entry);
+			currentNetwork.entryUpdate(entry);
+		}
 	}
 	
 	public void markTilesReachable() {
 		if(currentNetwork == null)
 			return;
 		for(AgentEntry entry : tileList)
+		{
 			currentNetwork.setTileReachable(entry);
+			currentNetwork.entryUpdate(entry);
+		}
 	}
 	
 	@Override

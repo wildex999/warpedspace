@@ -32,4 +32,5 @@ public class BlockNetworkRelayT2 extends BlockRelayBase {
 	public int getRadius() {
 		return relayRadius;
 	}
+
 }

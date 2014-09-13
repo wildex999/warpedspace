@@ -89,7 +89,7 @@ public class MessageActivate extends MessageBase {
         		return null;
         	
         	//Invalid and inactive entries can not be used
-        	if(!entry.isValid() || !entry.active)
+        	if(!entry.isValid() || !entry.active || !entry.agent.isNetworkReachable())
         		return null;
         	
         	//Set-up Fake Player to proxy the request, as some containers will check player proximity

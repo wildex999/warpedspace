@@ -19,6 +19,8 @@ public class TileBasicNetworkRelay extends RelayNodeTile implements IGuiWatchers
 	private HashSet<EntityPlayer> watchers;
 	
 	public TileBasicNetworkRelay() {
+		inventoryName = "Network Relay";
+		
 		watchers = new HashSet<EntityPlayer>();
 	}
 	

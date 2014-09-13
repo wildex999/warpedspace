@@ -1,5 +1,6 @@
 package com.wildex999.warpedspace.tiles;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -7,11 +8,13 @@ import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.tileentity.TileEntity;
 import akka.actor.FSM.State;
 
 import com.wildex999.utils.BlockItemName;
@@ -30,11 +33,13 @@ import com.wildex999.warpedspace.warpednetwork.INetworkRelay;
 import com.wildex999.warpedspace.warpednetwork.ITileListener;
 import com.wildex999.warpedspace.warpednetwork.AgentEntry;
 import com.wildex999.warpedspace.warpednetwork.WarpedNetwork;
+import com.wildex999.warpedspace.warpednetwork.iface.InterfaceInventoryManager;
+import com.wildex999.warpedspace.warpednetwork.iface.InterfaceRedstoneManager;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, ITileListener, IEntryListener {
+public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, ITileListener, IEntryListener, ISidedInventory {
 	private HashSet<EntityPlayer> watchers;
 	private HashSet<EntityPlayerMP> tileWatchers;
 	
@@ -42,13 +47,16 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	public long storedGid;
 	public AgentEntry currentEntry;
 	
+	private InterfaceRedstoneManager redstoneManager;
+	private InterfaceInventoryManager inventoryManager;
+	
 	//Client data
 	@SideOnly(Side.CLIENT)
-	public Block hostBlock = null;
+	public Block hostBlock;
 	@SideOnly(Side.CLIENT)
 	public int x,y,z;
 	@SideOnly(Side.CLIENT)
-	public NBTTagCompound tileTag;
+	public TileEntity proxyTile;
 	
 	public TileNetworkInterface() {
 		inventoryName = "Network Interface";
@@ -58,6 +66,9 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		storedEntry = "";
 		storedGid = -1;
 		currentEntry = null;
+		
+		redstoneManager = new InterfaceRedstoneManager(this);
+		inventoryManager = new InterfaceInventoryManager(this);
 	}
 	
 	//Send GUI update to clients.
@@ -88,7 +99,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 			storedEntry = currentEntry.name; //Update stored name in case of rename
 			storedGid = currentEntry.gid; //GID should not change, but just in case(For future)
 			
-			if(currentEntry.active)
+			if(currentEntry.active && currentEntry.agent.isNetworkReachable())
 				entryState = Messages.online;
 			else
 				entryState = Messages.offline;
@@ -96,7 +107,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 			itemName = BlockItemName.get(currentEntry.block, currentEntry.world, currentEntry.x, currentEntry.y, currentEntry.z);
 			itemMeta = (byte)currentEntry.world.getBlockMetadata(currentEntry.x, currentEntry.y, currentEntry.z);
 		}
-		ModLog.logger.info("Interface GUI Update: " + storedEntry + " gid: " + storedGid);
+
 		MessageBase messageUpdate = new MessageSCInterfaceUpdate(getNetworkStateMessage(), entryState, storedEntry, storedGid, itemName, itemMeta);
 		
 		if(player != null)
@@ -117,7 +128,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 			}
 		}
 		
-		//Right clicking will glitch the render, so we just send the data packet again when people are in GUI
+		//Right clicking will glitch the render(Server resends block), so we just send the data packet again when people are in GUI
 		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		
 		return true;
@@ -162,9 +173,8 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 				
 				if(currentEntry != oldEntry)
 				{
-					ModLog.logger.info("ENTRY CHANGED!");
 					this.markDirty();
-					worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+					entryUpdated();
 					sendGuiUpdate(null, false);
 				}
 			}
@@ -197,6 +207,15 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 			currentNetwork.unregisterTileListener(this);
 	}
 	
+	//Entry updated(Added, removed, updated)
+	public void entryUpdated() {
+		redstoneManager.update();
+		inventoryManager.update();
+		//TODO: Call onNeighborUpdate(tile)
+		worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord, zCoord, getBlockType());
+		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+	}
+	
 	@Override
 	public boolean joinNetwork(WarpedNetwork network) {
 		if(!super.joinNetwork(network))
@@ -222,6 +241,8 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 			currentNetwork.unregisterEntryListener(storedGid, this);
 		super.leaveNetwork();
 		currentEntry = null;
+		
+		entryUpdated();
 		sendGuiUpdate(null, false);
 	}
 	
@@ -230,6 +251,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		if(super.joinRelay(relay))
 		{
 			sendGuiUpdate(null, false);
+			entryUpdated();
 			return true;
 		}
 		else
@@ -239,24 +261,32 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	@Override
 	public void eventLostRelay() {
 		super.eventLostRelay();
+		
+		entryUpdated();
 		sendGuiUpdate(null, false);
 	}
 	
 	@Override
 	public void eventNetworkDisconnect() {
 		super.eventNetworkDisconnect();
+		
+		entryUpdated();
 		sendGuiUpdate(null, false);
 	}
 	
 	@Override
 	public void eventNetworkReconnect() {
 		super.eventNetworkReconnect();
+		
+		entryUpdated();
 		sendGuiUpdate(null, false);
 	}
 	
 	@Override
 	public void eventLostNetwork() {
 		super.eventLostNetwork();
+		
+		entryUpdated();
 		sendGuiUpdate(null, false);
 	}
 	
@@ -329,6 +359,21 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		this.setEntry(owner, gid, storedEntry);
 		return false;
 	}
+	
+	@Override
+	public boolean onEntryUpdate(AgentEntry entry) {
+		//Entry Block has updated(reachable, onNeighborBlockChange etc.), send update to clients
+		//TODO: When tile is not reachable, who it on the rendering(Red outline/cover? Maybe render text: OFFLINE)
+		entryUpdated();
+		sendGuiUpdate(null, false);
+		
+		//and pass the message on to managers
+		//TODO: Check redstone update, item update etc.
+		
+		//TODO: We ourself call onNeighborBlockChange(Avoid infinite loops!)
+		
+		return false;
+	}
 
 	@Override
 	public boolean onEntryUnavailable(long gid) {
@@ -339,8 +384,8 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	@Override
 	public Packet getDescriptionPacket() {
         NBTTagCompound data = new NBTTagCompound();
-        if(currentEntry == null)
-        	return null;
+        if(currentEntry == null || !currentEntry.isValid() || !currentEntry.active)
+        	return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, 0, data);
         
         //TODO: Listen for changes in selected Entry, and update client when changed(Lever switch, changed block etc.)
         
@@ -351,6 +396,27 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
         data.setInteger("x", currentEntry.x);
         data.setInteger("y", currentEntry.y);
         data.setInteger("z", currentEntry.z);
+        
+        //TODO: Only send tile data if client does not have chunk loaded(What about if client unloads chunk afterwards?)
+        TileEntity tile = currentEntry.world.getTileEntity(currentEntry.x, currentEntry.y, currentEntry.z);
+        if(tile != null)
+        {
+        	Packet packet = tile.getDescriptionPacket();
+        	//Only send TileData if it's already in the form of NBT
+        	if(packet instanceof S35PacketUpdateTileEntity)
+        	{
+        		S35PacketUpdateTileEntity dataPacket = (S35PacketUpdateTileEntity)packet;
+        		//AT not working(As usual, no damn info about it) resorting to reflection(slow?)
+        		try
+        		{
+	        		Field f = dataPacket.getClass().getDeclaredField("field_148860_e");
+	        		f.setAccessible(true);
+	        		NBTTagCompound tileData = (NBTTagCompound)f.get(dataPacket);
+	        		data.setTag("tileData", tileData);
+        		}
+        		catch(Exception e) {} //Ignore Ignore Ignore
+        	}
+        }
         
         return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, 0, data);
 	}
@@ -365,11 +431,169 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		y = data.getInteger("y");
 		z = data.getInteger("z");
 		
-		this.hostBlock = Block.getBlockFromName(itemName);
+		Block oldBlock = hostBlock;
+		hostBlock = Block.getBlockFromName(itemName);
 		worldObj.setBlockMetadataWithNotify(xCoord, yCoord, zCoord, itemMeta, 1);
 		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+		
+		if(hostBlock == null || hostBlock != oldBlock)
+			proxyTile = null;
+		
+		//Proxy TileEntity
+		if(data.hasKey("tileData") && hostBlock != null)
+		{
+			if(proxyTile == null)
+			{
+				if(hostBlock.hasTileEntity(itemMeta))
+				{
+					proxyTile = hostBlock.createTileEntity(getWorldObj(), itemMeta);
+					if(proxyTile != null)
+						proxyTile.setWorldObj(getWorldObj()); //Share the same world as the Interface
+				}
+			}
+			if(proxyTile != null)
+			{
+				NBTTagCompound tileData = data.getCompoundTag("tileData");
+				//TODO: This is a crash waiting to happen, add a filter in config file for Block/Tiles this does not work with
+				proxyTile.onDataPacket(net, new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 0, tileData));
+			}
+		}
+		
 		ModLog.logger.info("DATA PACKET: " + hostBlock);
 		
 	}
+	
+	
+	//---REDSTONE---//
+	
+	public InterfaceRedstoneManager getRedstoneManager() {
+		return redstoneManager;
+	}
+	
+	//---INVENTORY---//
+	//If the hosted block is not a Tile Entity, or does not implement IInventory, 
+	//we just return 0 in getSizeInventory.
+	//TODO: Pass this on to InventoryManager
+	
+	public InterfaceInventoryManager getInventoryManager() {
+		return inventoryManager;
+	}
+	
+    @Override
+    public int getSizeInventory() {
+    	return inventoryManager.getSizeInventory();
+    }
+
+    @Override
+    public ItemStack getStackInSlot(int slot) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick) //When in client/opening GUI(GUI Network handler runs outside world tick)
+    		return super.getStackInSlot(slot);
+    	return inventoryManager.getStackInSlot(slot);
+    }
+
+    @Override
+    public ItemStack decrStackSize(int slot, int count) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.decrStackSize(slot, count);
+    	return inventoryManager.decrStackSize(slot, count);
+    }
+
+    @Override
+    public ItemStack getStackInSlotOnClosing(int slot) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.getStackInSlotOnClosing(slot);
+    	return inventoryManager.getStackInSlotOnClosing(slot);
+    }
+
+    @Override
+    public void setInventorySlotContents(int slot, ItemStack stack) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		super.setInventorySlotContents(slot, stack);
+    	else
+    		inventoryManager.setInventorySlotContents(slot, stack);
+    }
+
+    @Override
+    public String getInventoryName() {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.getInventoryName();
+    	return inventoryManager.getInventoryName();
+    }
+
+    @Override
+    public boolean hasCustomInventoryName() {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.hasCustomInventoryName();
+    	return inventoryManager.hasCustomInventoryName();
+    }
+
+    @Override
+    public int getInventoryStackLimit() {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.getInventoryStackLimit();
+    	return inventoryManager.getInventoryStackLimit();
+    }
+
+    @Override
+    public void markDirty() {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		super.markDirty();
+    	else
+    		inventoryManager.markDirty();
+    }
+
+    @Override
+    public boolean isUseableByPlayer(EntityPlayer player) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.isUseableByPlayer(player);
+    	return inventoryManager.isUseableByPlayer(player);
+    }
+
+    @Override
+    public void openInventory() {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		super.openInventory();
+    	else
+    		inventoryManager.openInventory();
+    }
+
+    @Override
+    public void closeInventory() {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		super.closeInventory();
+    	else
+    		inventoryManager.closeInventory();
+    }
+
+    @Override
+    public boolean isItemValidForSlot(int slot, ItemStack stack) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.isItemValidForSlot(slot, stack);
+    	return inventoryManager.isItemValidForSlot(slot, stack);
+    }
+    
+    //Sided specific
+    //If your hosted tile entity does not have ISidedInventory, we simply return all sides all true
+    @Override
+    public int[] getAccessibleSlotsFromSide(int side) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.getAccessibleSlotsFromSide(side);
+    	return inventoryManager.getAccessibleSlotsFromSide(side);
+    }
+
+    @Override
+    public boolean canInsertItem(int p_102007_1_, ItemStack p_102007_2_, int p_102007_3_) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.canInsertItem(p_102007_1_, p_102007_2_, p_102007_3_);
+    	return inventoryManager.canInsertItem(p_102007_1_, p_102007_2_, p_102007_3_);
+    }
+
+    @Override
+    public boolean canExtractItem(int p_102008_1_, ItemStack p_102008_2_, int p_102008_3_) {
+    	if(worldObj.isRemote || !TickHandler.inWorldTick)
+    		return super.canExtractItem(p_102008_1_, p_102008_2_, p_102008_3_);
+    	return inventoryManager.canExtractItem(p_102008_1_, p_102008_2_, p_102008_3_);
+    }
+	
 	
 }

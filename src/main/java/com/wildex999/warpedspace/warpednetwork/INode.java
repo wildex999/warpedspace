@@ -1,5 +1,7 @@
 package com.wildex999.warpedspace.warpednetwork;
 
+import net.minecraft.world.World;
+
 /*
  * A Node for the Warped Space Network will, by itself, only allow for registering to and accessing the network.
  * It does not provide any service to the network.
@@ -40,6 +42,7 @@ public interface INode {
 	public String getOwner();
 	
 	//Return Relay position
+	public World getWorld();
 	public int getPosX();
 	public int getPosY();
 	public int getPosZ();

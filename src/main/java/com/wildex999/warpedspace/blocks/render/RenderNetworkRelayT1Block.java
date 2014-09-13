@@ -3,6 +3,7 @@ package com.wildex999.warpedspace.blocks.render;
 import org.lwjgl.opengl.GL11;
 
 import com.wildex999.utils.ModLog;
+import com.wildex999.warpedspace.tiles.TileBasicNetworkRelay;
 import com.wildex999.warpedspace.tiles.TileNetworkController;
 import com.wildex999.warpedspace.tiles.TileNetworkInterface;
 import com.wildex999.warpedspace.tiles.renderers.RendererTileBase;
@@ -22,15 +23,15 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public class RenderNetworkControllerBlock implements ISimpleBlockRenderingHandler {
+public class RenderNetworkRelayT1Block implements ISimpleBlockRenderingHandler {
 
-	private TileNetworkController controller = new TileNetworkController();
+	private TileBasicNetworkRelay relay = new TileBasicNetworkRelay();
 	
 	@Override
 	public void renderInventoryBlock(Block block, int metadata, int modelId,
-			RenderBlocks renderer) {		
+			RenderBlocks renderer) {	
 		RendererTileBase.renderInventory = true;
-		TileEntityRendererDispatcher.instance.renderTileEntityAt(controller, 0, 0, 0, 0);
+		TileEntityRendererDispatcher.instance.renderTileEntityAt(relay, 0, 0, 0, 0);
 		RendererTileBase.renderInventory = false;
 	}
 
@@ -49,7 +50,7 @@ public class RenderNetworkControllerBlock implements ISimpleBlockRenderingHandle
 	@Override
 	public int getRenderId() {
 		// TODO Auto-generated method stub
-		return 998;
+		return 997;
 	}
 
 }

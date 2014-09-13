@@ -32,7 +32,10 @@ public class BlockItemName {
 				Block drawBlock = Block.getBlockFromName(name);
 				item = new ItemStack(drawBlock, 1, meta);
 				if(item.getItem() == null)
+				{
+					ModLog.logger.info("No item found for: " + name);
 					item = null;
+				}
 			}
 		}
 		

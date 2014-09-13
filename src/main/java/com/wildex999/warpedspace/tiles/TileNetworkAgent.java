@@ -14,6 +14,7 @@ import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.Messages;
 import com.wildex999.warpedspace.ReturnMessage;
 import com.wildex999.warpedspace.TickHandler;
+import com.wildex999.warpedspace.WarpedSpace;
 import com.wildex999.warpedspace.blocks.BlockNetworkAgent;
 import com.wildex999.warpedspace.gui.NetworkAgentGui;
 import com.wildex999.warpedspace.gui.interfaces.IGuiWatchers;
@@ -30,6 +31,8 @@ import com.wildex999.warpedspace.warpednetwork.INetworkAgent;
 import com.wildex999.warpedspace.warpednetwork.AgentEntry;
 import com.wildex999.warpedspace.warpednetwork.WarpedNetwork;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -37,6 +40,9 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.Packet;
+import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockAccess;
 
@@ -44,6 +50,9 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	private static final Random rand = new Random();
 	private BlockNetworkAgent block;
 	private AgentEntry[] entries = new AgentEntry[sideCount]; //Internal ID for each direction(-1 if not joined)
+	
+	@SideOnly(Side.CLIENT)
+	private boolean[] sideState;
 	
 	private HashSet<EntityPlayer> watchers;
 	
@@ -69,6 +78,14 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 			nameList[i] = null;
 		}
 		watchers = new HashSet<EntityPlayer>();
+		
+		if(WarpedSpace.isClient)
+			clientInit();
+	}
+	
+	@SideOnly(Side.CLIENT)
+	public void clientInit() {
+		sideState = new boolean[sideCount];
 	}
 	
 	//Send GUI update to player.
@@ -96,7 +113,7 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 				tileMeta = (byte)entry.world.getBlockMetadata(entry.x, entry.y, entry.z);
 			}
 			
-			boolean active = (name.length() != 0 && entries[i] != null && entries[i].active);
+			boolean active = (name.length() != 0 && entry != null && entry.active);
 			tiles[i] = new NetworkAgentGui.TileState(name, tileName, tileMeta, active);
 		}
 		
@@ -127,8 +144,6 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	{
 		if(worldObj.isRemote)
 			return;
-		
-		ModLog.logger.info("UPDATE");
 		
 		//Test if changed compared to what is currently
 		for(int i = 0; i < sideCount; i++)
@@ -190,7 +205,12 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		
 		if(newTile != null)
 			if(newTile.block == oldTile)
-				return; //No change
+			{
+				//onNeighborBlockUpdate
+				if(currentNetwork != null)
+					currentNetwork.entryUpdate(oldEntry);
+				return;
+			}
 		
 		if(newTile == null) //Remove tile
 		{
@@ -198,6 +218,8 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 			gidList[side] = oldEntry.gid;
 			ModLog.logger.info("RemoveTile: " + oldTile);
 			removeTile(side);
+			
+			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 			return;
 		}
 		
@@ -209,6 +231,8 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 			ReturnMessage ret = addTile(nameList[side], newTile, side, prevGid);
 			if(ret != ReturnMessage.TileAdded)
 				ModLog.logger.info("Failed: " + ret + " with name: " + nameList[side]);
+			
+			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 			return;
 		}
 		else //Replacing existing tile
@@ -313,6 +337,23 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		return true;
 	}
 	
+	public AgentEntry getEntry(int side) {
+		if(side < 0 || side >= sideCount)
+			return null;
+		return entries[side];
+	}
+	
+	//Returns true if there is an entry for the given side
+	public boolean sideUsed(int side) {
+		if(side < 0 || side >= sideCount)
+			return false;
+		
+		if(worldObj.isRemote)
+			return sideState[side];
+		else
+			return entries[side] != null;
+	}
+	
 	@Override
 	protected void onCacheInvalidate() {
 		//TODO: Clear idList and then get the id of each side.
@@ -413,6 +454,15 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	
 	@Override
 	protected void onJoinedNetwork() {
+		//Check for pending renames
+		for(int side = 0; side < sideCount; side++)
+		{
+			AgentEntry entry = entries[side];
+			if(entry == null)
+				continue;
+			if(!entry.name.equals(nameList[side]))
+				onClientInput(side, nameList[side]);
+		}
 		sendNetworkUpdate(null, false);
 	}
 
@@ -454,6 +504,23 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		sendNetworkUpdate(null, false);
 	}
 	
-	
+	@Override
+	public Packet getDescriptionPacket() {
+        NBTTagCompound data = new NBTTagCompound();
 
+        for(int i=0; i<sideCount; i++)
+        	data.setBoolean("s"+i, sideUsed(i));
+        
+        return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, 0, data);
+	}
+
+	@Override
+	public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+		NBTTagCompound data = pkt.func_148857_g();
+		
+		for(int i=0; i<sideCount; i++)
+			sideState[i] = data.getBoolean("s"+i);
+	}
+	
+	
 }

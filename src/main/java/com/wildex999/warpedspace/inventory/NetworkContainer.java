@@ -124,7 +124,7 @@ public class NetworkContainer extends Container {
 				if(networkNodeInventory.getInventoryStackLimit() == 1)
 				{
 					Slot inputSlot = (Slot)inventorySlots.get(36);
-					if(inputSlot == null || inputSlot.getHasStack())
+					if(inputSlot == null || inputSlot.getHasStack() || !inputSlot.isItemValid(slotStack))
 						return null;
 					
 					inputSlot.putStack(slotStack.splitStack(1));

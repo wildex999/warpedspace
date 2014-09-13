@@ -8,5 +8,6 @@ package com.wildex999.warpedspace.warpednetwork;
 public interface IEntryListener {
 	//Return true to be removed from listener list
 	public boolean onEntryAvailable(long gid);
+	public boolean onEntryUpdate(AgentEntry entry);
 	public boolean onEntryUnavailable(long gid);
 }

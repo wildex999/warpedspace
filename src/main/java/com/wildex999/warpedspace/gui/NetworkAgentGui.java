@@ -42,6 +42,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+/*
+ * TODO: Option to clear all Interfaces stored for side(clear old gid)
+ */
 
 public class NetworkAgentGui implements IGuiHandler
 {
@@ -144,7 +147,7 @@ public class NetworkAgentGui implements IGuiHandler
 				if(i < TileNetworkAgent.sideCount-1)
 				{
 					TileState tile = tiles.get(i);
-					renderItems.set(i,BlockItemName.getItem(tile.name, tile.tileMeta));
+					renderItems.set(i,BlockItemName.getItem(tile.tileName, tile.tileMeta));
 				}
 					
 				

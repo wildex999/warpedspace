@@ -43,6 +43,7 @@ public class MessageSCInterfaceUpdate extends MessageBase {
 	@Override
 	public void fromBytes(ByteBuf buf) {
 		networkState = buf.readInt();
+		entryState = buf.readInt();
 		selectedName = ByteBufUtils.readUTF8String(buf);
 		gid = buf.readLong();
 		selectedBlockName = ByteBufUtils.readUTF8String(buf);
@@ -52,6 +53,7 @@ public class MessageSCInterfaceUpdate extends MessageBase {
 	@Override
 	public void toBytes(ByteBuf buf) {
 		buf.writeInt(networkState);
+		buf.writeInt(entryState);
 		ByteBufUtils.writeUTF8String(buf, selectedName);
 		buf.writeLong(gid);
 		ByteBufUtils.writeUTF8String(buf, selectedBlockName);
@@ -65,10 +67,7 @@ public class MessageSCInterfaceUpdate extends MessageBase {
         	GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         	ModLog.logger.info("Got gid: " + message.gid + " screen: " + screen);
         	if(screen == null || !(screen instanceof NetworkInterfaceGui.GUI))
-        	{
-        		ModLog.logger.info("Uh-oh");
         		return null;
-        	}
         	
         	NetworkInterfaceGui.GUI interfaceGui = (NetworkInterfaceGui.GUI)screen;
         	interfaceGui.networkUpdate(message.networkState, message.entryState, message.selectedName, message.gid, message.selectedBlockName, message.selectedBlockMeta);

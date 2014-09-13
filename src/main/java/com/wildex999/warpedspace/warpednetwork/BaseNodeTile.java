@@ -12,6 +12,7 @@ import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 
 public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements IPreTickOneShotListener, INode {
 
@@ -36,16 +37,21 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 			if(relaySearchTicks++ >= ticksRelaySearch)
 			{
 				relaySearchTicks = 0;
-				INetworkRelay relay = currentNetwork.getRelayForNode(this, true);
-				if(relay == null)
-					return;
-				
-				if(this.joinRelay(relay))
-					return;
-				//TODO: Continue search if relay doesn't allow us to join
-				//Let getRelayForNode do the joining?(it call node.joinRelay)
+				tryJoinRelay();
 			}
 		}
+	}
+	
+	//Try to join a relay if currently got none
+	public void tryJoinRelay() {
+		INetworkRelay relay = currentNetwork.getRelayForNode(this, true);
+		if(relay == null)
+			return;
+		
+		if(this.joinRelay(relay))
+			return;
+		//TODO: Continue search if relay doesn't allow us to join
+		//Let getRelayForNode do the joining?(it call node.joinRelay)
 	}
 	
 	@Override
@@ -57,13 +63,8 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 		{
 			currentNetwork = network;
 			
-			if(currentRelay != null && currentRelay.isNetworkReachable())
-				isReachable = true;
-			else
-				isReachable = false;
-			
-			relaySearchTicks = ticksRelaySearch;
-			updateEntity();
+			//Try to get Relay at once
+			tryJoinRelay();
 			
 			return true;
 		}
@@ -134,6 +135,11 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 		onNetworkCardUpdate();
 		
 		return stack;
+	}
+	
+	@Override
+	public World getWorld() {
+		return getWorldObj();
 	}
 	
 	@Override

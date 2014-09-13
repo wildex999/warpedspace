@@ -69,6 +69,11 @@ public class BlockNetworkController extends BlockBase {
 	}
 	
 	@Override
+	public boolean isOpaqueCube() {
+		return false;
+	}
+	
+	@Override
 	public boolean renderAsNormalBlock() {
 		return false;
 	}

@@ -16,16 +16,20 @@ import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.ServerTickEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
 
 public class TickHandler {
 
 	private static List<IPreTickOneShotListener> listenerList = new ArrayList<IPreTickOneShotListener>();
+	public static boolean inWorldTick = false;
 	
 	@SubscribeEvent
 	public void onServerTick(ServerTickEvent event) {
 		
 		if(event.phase == Phase.START)
 		{
+
+			
 			for(IPreTickOneShotListener listener : listenerList)
 				listener.onLoadComplete();
 			listenerList.clear();
@@ -33,6 +37,17 @@ public class TickHandler {
 			//Networking queued messages
 			MessageBase.sendQueuedMessages();
 		}
+		else
+		{
+		}
+	}
+	
+	@SubscribeEvent
+	public void onWorldTick(WorldTickEvent event) {
+		if(event.phase == Phase.START)
+			inWorldTick = true;
+		else
+			inWorldTick = false;
 	}
 	
 	@SubscribeEvent
