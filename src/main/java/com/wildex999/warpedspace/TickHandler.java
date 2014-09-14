@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 
 import com.wildex999.utils.ModLog;
+import com.wildex999.warpedspace.items.ItemPortableNetworkInterface;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.MessageOpenTileGui;
 import com.wildex999.warpedspace.tiles.IPreTickOneShotListener;
@@ -17,6 +18,7 @@ import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.ServerTickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
+import cpw.mods.fml.relauncher.Side;
 
 public class TickHandler {
 
@@ -45,7 +47,11 @@ public class TickHandler {
 	@SubscribeEvent
 	public void onWorldTick(WorldTickEvent event) {
 		if(event.phase == Phase.START)
+		{
 			inWorldTick = true;
+			if(event.side == Side.SERVER)
+				ItemPortableNetworkInterface.onTick();
+		}
 		else
 			inWorldTick = false;
 	}

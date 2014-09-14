@@ -297,11 +297,7 @@ public class WarpedNetwork {
 	//Returns null if no Relay is found.
 	public INetworkRelay getRelayForNode(INode node, boolean gotConnection) {
 		//TODO: Use Spatial Partitioning(QuadTree/Grid) for faster lookup
-		
-		//For now we only do two dimensional radius
-		int nX = node.getPosX();
-		int nZ = node.getPosZ();
-		
+
 		for(INetworkRelay relay : relayMap) {
 			if(gotConnection)
 			{
@@ -309,19 +305,32 @@ public class WarpedNetwork {
 					continue;
 			}
 			
-			//Do Radius check
-			int diffX = nX - relay.getPosX();
-			int diffZ = nZ - relay.getPosZ();
-			
-			//This overflows on larger radiuses and distances, so got long(Can still possibly overflow on int.MAX_VALUE?)
-			long diffX2 = ((long)diffX*(long)diffX);
-			long diffZ2 = ((long)diffZ*(long)diffZ);
-			long radius2 = ((long)relay.getRadius()*(long)relay.getRadius());
-			if(diffX2 + diffZ2 <= radius2)
+			if(relayInRange(node, relay))
 				return relay;
 		}
 		
 		return null;
+	}
+	
+	//Return true if node is in range of the given relay
+	public boolean relayInRange(INode node, INetworkRelay relay)
+	{
+		//For now we only do two dimensional radius
+		int nX = node.getPosX();
+		int nZ = node.getPosZ();
+		
+		//Do Radius check
+		int diffX = nX - relay.getPosX();
+		int diffZ = nZ - relay.getPosZ();
+		
+		//This overflows on larger radiuses and distances, so got long(Can still possibly overflow on int.MAX_VALUE?)
+		long diffX2 = ((long)diffX*(long)diffX);
+		long diffZ2 = ((long)diffZ*(long)diffZ);
+		long radius2 = ((long)relay.getRadius()*(long)relay.getRadius());
+		if(diffX2 + diffZ2 <= radius2)
+			return true;
+		
+		return false;
 	}
 	
 	public boolean setController(INetworkController controller) {

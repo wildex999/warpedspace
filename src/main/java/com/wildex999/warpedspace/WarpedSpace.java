@@ -6,6 +6,7 @@ import com.wildex999.warpedspace.gui.BasicNetworkRelayGui;
 import com.wildex999.warpedspace.gui.NetworkAgentGui;
 import com.wildex999.warpedspace.gui.NetworkInterfaceGui;
 import com.wildex999.warpedspace.gui.NetworkManagerGui;
+import com.wildex999.warpedspace.gui.PortableNetworkInterfaceGui;
 import com.wildex999.warpedspace.gui.WarpedControllerGui;
 import com.wildex999.warpedspace.items.ItemLibrary;
 import com.wildex999.warpedspace.networking.Networking;
@@ -72,6 +73,7 @@ public class WarpedSpace {
     	guiHandler.setGuiHandler(NetworkAgentGui.GUI_ID, new NetworkAgentGui());
     	guiHandler.setGuiHandler(NetworkInterfaceGui.GUI_ID, new NetworkInterfaceGui());
     	guiHandler.setGuiHandler(BasicNetworkRelayGui.GUI_ID, new BasicNetworkRelayGui());
+    	guiHandler.setGuiHandler(PortableNetworkInterfaceGui.GUI_ID, new PortableNetworkInterfaceGui());
     	
     	networkSaveHandler = new NetworkSaveHandler();
     	

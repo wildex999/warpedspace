@@ -14,6 +14,7 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -33,6 +34,7 @@ import com.wildex999.warpedspace.gui.elements.GuiListEntry;
 import com.wildex999.warpedspace.gui.elements.GuiListEntryTile;
 import com.wildex999.warpedspace.inventory.ControllerContainer;
 import com.wildex999.warpedspace.inventory.InterfaceContainer;
+import com.wildex999.warpedspace.items.ItemPortableNetworkInterface;
 import com.wildex999.warpedspace.networking.MessageActivate;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.MessageWatchGui;
@@ -56,14 +58,15 @@ public class NetworkInterfaceGui implements IGuiHandler {
 
 	@Override
 	public Object getClientGuiElement(int ID, EntityPlayer player, World world,int x, int y, int z) {
-		TileEntity tile = world.getTileEntity(x, y, z);
-		return new GUI(player, (TileNetworkInterface)tile);
+		TileNetworkInterface tile = (TileNetworkInterface)world.getTileEntity(x, y, z);
+		return new GUI(player, tile);
 	}
 	
 	public static class GUI extends GuiContainer {
 		
 		public static final ResourceLocation backgroundImage = new ResourceLocation(WarpedSpace.MODID, "textures/gui/node_base.png");
 		public static final ResourceLocation backgroundImageTiles = new ResourceLocation(WarpedSpace.MODID, "textures/gui/network_interface_tiles.png");
+		public int thisId = GUI_ID;
 		
 		private static final short backgroundWidth = 175;
 		private static final short backgroundHeight = 221;
@@ -209,7 +212,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			//Tell server we want the list of Tiles
 			if(!watchingTiles)
 			{
-				MessageBase messageWatch = new MessageCSWatchList(tile, true);
+				MessageBase messageWatch = new MessageCSWatchList(tile, thisId == PortableNetworkInterfaceGui.GUI_ID, true);
 				messageWatch.sendToServer();
 				watchingTiles = true;
 			}
@@ -241,7 +244,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			//Tell server we are no longer interested in the Tiles list
 			if(watchingTiles)
 			{
-				MessageBase messageWatch = new MessageCSWatchList(tile, false);
+				MessageBase messageWatch = new MessageCSWatchList(tile, thisId == PortableNetworkInterfaceGui.GUI_ID, false);
 				messageWatch.sendToServer();
 				watchingTiles = false;
 			}
@@ -322,7 +325,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 	        if(watchingTiles)
 	        {
 				//Tell server we are no longer interested in the Tiles list
-				MessageBase messageWatch = new MessageCSWatchList(tile, false);
+				MessageBase messageWatch = new MessageCSWatchList(tile, thisId == PortableNetworkInterfaceGui.GUI_ID, false);
 				messageWatch.sendToServer();
 				watchingTiles = false;
 	        }
@@ -381,8 +384,8 @@ public class NetworkInterfaceGui implements IGuiHandler {
 					if(networkState == Messages.online && entryState == Messages.online)
 					{
 						ModLog.logger.info("Send screen: " + this);
-						GuiHandler.setPreviousTileGui(this, GUI_ID, tile);
-						MessageBase messageActivate = new MessageActivate(tile, gid);
+						GuiHandler.setPreviousTileGui(this, thisId, tile);
+						MessageBase messageActivate = new MessageActivate(tile, gid, thisId == PortableNetworkInterfaceGui.GUI_ID);
 						messageActivate.sendToServer();
 					}
 				}
@@ -400,13 +403,13 @@ public class NetworkInterfaceGui implements IGuiHandler {
 					if(entry == null || !(entry instanceof GuiListEntryTile))
 					{
 						selectedEntry = -1;
-						messageUpdate = new MessageCSInterfaceUpdate(tile, -1);
+						messageUpdate = new MessageCSInterfaceUpdate(tile, thisId == PortableNetworkInterfaceGui.GUI_ID, -1);
 					}
 					else
 					{
 						GuiListEntryTile tileEntry = (GuiListEntryTile)entry;
 						selectedEntry = tileEntry.gid;
-						messageUpdate = new MessageCSInterfaceUpdate(tile, tileEntry.gid);
+						messageUpdate = new MessageCSInterfaceUpdate(tile, thisId == PortableNetworkInterfaceGui.GUI_ID, tileEntry.gid);
 					}
 					messageUpdate.sendToServer();
 				}
@@ -420,8 +423,8 @@ public class NetworkInterfaceGui implements IGuiHandler {
 							if(entry instanceof GuiListEntryTile)
 							{
 								GuiListEntryTile tileEntry = (GuiListEntryTile)entry;
-								GuiHandler.setPreviousTileGui(this, GUI_ID, tile);
-								MessageBase messageActivate = new MessageActivate(tile, tileEntry.gid);
+								GuiHandler.setPreviousTileGui(this, thisId, tile);
+								MessageBase messageActivate = new MessageActivate(tile, tileEntry.gid, thisId == PortableNetworkInterfaceGui.GUI_ID);
 								messageActivate.sendToServer();
 							}
 						}

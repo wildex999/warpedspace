@@ -7,7 +7,9 @@ import net.minecraft.world.World;
 import io.netty.buffer.ByteBuf;
 
 import com.wildex999.utils.ModLog;
+import com.wildex999.warpedspace.gui.PortableNetworkInterfaceGui;
 import com.wildex999.warpedspace.gui.interfaces.INetworkListGui;
+import com.wildex999.warpedspace.items.ItemPortableNetworkInterface;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.warpednetwork.MessageSCNetworkList;
 import com.wildex999.warpedspace.networking.warpednetwork.MessageSCNetworkList.NetworkInfo;
@@ -27,13 +29,15 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 public class MessageCSWatchList extends MessageBase {
 
 	protected boolean doWatch;
+	protected boolean portableTile;
 	protected TileEntityInfo tile;
 	
 	//Receive constructor
 	public MessageCSWatchList() {}
 	
-	public MessageCSWatchList(TileEntity tile, boolean watch) {
+	public MessageCSWatchList(TileEntity tile, boolean portableTile, boolean watch) {
 		doWatch = watch;
+		this.portableTile = portableTile;
 		this.tile = new TileEntityInfo(tile);
 		if(this.tile == null)
 			ModLog.logger.error("Trying to watch Tile list from null Tile!");
@@ -42,12 +46,14 @@ public class MessageCSWatchList extends MessageBase {
 	@Override
 	public void fromBytes(ByteBuf buf) {
 		doWatch = buf.readBoolean();
+		portableTile = buf.readBoolean();
 		tile = readTileEntity(buf);
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
 		buf.writeBoolean(doWatch);
+		buf.writeBoolean(portableTile);
 		writeTileEntity(buf, tile);
 	}
 	
@@ -56,7 +62,12 @@ public class MessageCSWatchList extends MessageBase {
         @Override
         public IMessage onMessage(MessageCSWatchList message, MessageContext ctx) {
         	World world = getWorld(ctx);
-        	TileEntity tile = message.tile.getTileEntity(world);
+        	TileEntity tile;
+        	EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+        	if(message.portableTile)
+        		tile = ItemPortableNetworkInterface.getProxyInterface(player);
+        	else
+        		tile = message.tile.getTileEntity(world);
       
         	if(tile == null || !(tile instanceof TileNetworkInterface))
         		return null;
@@ -65,17 +76,12 @@ public class MessageCSWatchList extends MessageBase {
         	
         	WarpedNetwork network = tileInterface.getNetwork();
         	if(network == null)
-        	{
-        		ModLog.logger.info("Server Watch no network");
         		return null;
-        	}
-        	
-        	ModLog.logger.info("Server got Tile Watch: " + message.doWatch);
         	
         	if(message.doWatch)
-        		tileInterface.addTileWatcher(ctx.getServerHandler().playerEntity);
+        		tileInterface.addTileWatcher(player);
         	else
-        		tileInterface.removeTileWatcher(ctx.getServerHandler().playerEntity);
+        		tileInterface.removeTileWatcher(player);
         	
             return null;
         }

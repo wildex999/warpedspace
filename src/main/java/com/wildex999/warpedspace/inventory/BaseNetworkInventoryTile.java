@@ -14,7 +14,7 @@ public class BaseNetworkInventoryTile extends TileEntity implements ISidedInvent
 	
 	// Stack is not given any slot index, allowing any class overiding
 	// to set the slot which contains the network card.
-	protected ItemStack stackNetworkCard;
+	public ItemStack stackNetworkCard;
 	protected int[] defaultNetworkCardSlot = new int[] { 0 };
 	protected String inventoryName = "inventory.node.basenetworktile";
 

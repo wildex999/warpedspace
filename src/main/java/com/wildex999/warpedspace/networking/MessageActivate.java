@@ -16,6 +16,7 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 
 import com.wildex999.utils.ModLog;
+import com.wildex999.warpedspace.items.ItemPortableNetworkInterface;
 import com.wildex999.warpedspace.tiles.TileNetworkManager;
 import com.wildex999.warpedspace.warpednetwork.AgentEntry;
 import com.wildex999.warpedspace.warpednetwork.BaseNodeTile;
@@ -39,27 +40,30 @@ public class MessageActivate extends MessageBase {
 
 	protected long activateEntry;
 	protected TileEntityInfo tile;
+	protected boolean portableInterface;
 	
 	//Receiver
 	public MessageActivate() {}
 	
 	
-	public MessageActivate(BaseNodeTile node, long entry) {
+	public MessageActivate(BaseNodeTile node, long entry, boolean portableInterface) {
 		this.activateEntry = entry;
 		this.tile = new TileEntityInfo(node);
-		ModLog.logger.info("Send Activate with gid: " + activateEntry);
+		this.portableInterface = portableInterface;
 	}
 	
 	@Override
 	public void fromBytes(ByteBuf buf) {
 		tile = readTileEntity(buf);
 		activateEntry = buf.readLong();
+		portableInterface = buf.readBoolean();
 	}
 
 	@Override
 	public void toBytes(ByteBuf buf) {
 		writeTileEntity(buf, tile);
 		buf.writeLong(activateEntry);
+		buf.writeBoolean(portableInterface);
 	}
 	
 	public static class Handler implements IMessageHandler<MessageActivate, IMessage> {
@@ -67,10 +71,17 @@ public class MessageActivate extends MessageBase {
         @Override
         public IMessage onMessage(MessageActivate message, MessageContext ctx) {
         	World world = getWorld(ctx);
-        	TileEntity tile = message.tile.getTileEntity(world);
+        	TileEntity tile;
+        	EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+        	if(message.portableInterface)
+        		tile = ItemPortableNetworkInterface.getProxyInterface(player);
+        	else
+        		tile = message.tile.getTileEntity(world);
+        	
         	if(tile == null || !(tile instanceof BaseNodeTile))
         	{
         		ModLog.logger.error("Tried to activate entry: " + message.activateEntry + ", but got null/wrong tile at x: " + message.tile.posX + " y: " + message.tile.posY + " z: " + message.tile.posX);
+        		return null;
         	}
         	
         	BaseNodeTile node = (BaseNodeTile)tile;
@@ -82,7 +93,6 @@ public class MessageActivate extends MessageBase {
         		return null;
         	}
         	
-        	EntityPlayerMP player = ctx.getServerHandler().playerEntity;
         	AgentEntry entry = network.getBlock(null, player.getGameProfile().getName(), message.activateEntry);
         	//TODO: Send message to player if missing permission to activate tile
         	if(entry == null)

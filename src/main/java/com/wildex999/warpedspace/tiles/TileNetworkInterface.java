@@ -23,6 +23,7 @@ import com.wildex999.warpedspace.Messages;
 import com.wildex999.warpedspace.TickHandler;
 import com.wildex999.warpedspace.gui.interfaces.IGuiWatchers;
 import com.wildex999.warpedspace.items.ItemNetworkCard;
+import com.wildex999.warpedspace.items.ItemPortableNetworkInterface;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.networking.netinterface.MessageSCInterfaceUpdate;
 import com.wildex999.warpedspace.networking.netinterface.MessageTilesList;
@@ -42,6 +43,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, ITileListener, IEntryListener, ISidedInventory {
 	private HashSet<EntityPlayer> watchers;
 	private HashSet<EntityPlayerMP> tileWatchers;
+	
+	public EntityPlayer itemPlayer; //Set to the player using this as a Proxy for ItemPortableInterface
 	
 	public String storedEntry;
 	public long storedGid;
@@ -231,11 +234,22 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		
 		sendGuiUpdate(null, false);
 		
+		//If portable proxy, update the network stored
+		if(itemPlayer != null)
+		{
+			ItemStack currentStack = itemPlayer.inventory.getCurrentItem();
+			if(currentStack != null && currentStack.getItem() instanceof ItemPortableNetworkInterface)
+				ItemPortableNetworkInterface.setNetwork(currentStack, currentNetwork);
+		}
+		
 		return true;
 	}
 	
 	@Override
 	public void leaveNetwork() {
+		if(currentNetwork == null)
+			return;
+		
 		currentNetwork.unregisterTileListener(this);
 		if(storedGid >= 0)
 			currentNetwork.unregisterEntryListener(storedGid, this);
@@ -244,6 +258,14 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		
 		entryUpdated();
 		sendGuiUpdate(null, false);
+		
+		//If portable proxy, update the network stored
+		if(itemPlayer != null)
+		{
+			ItemStack currentStack = itemPlayer.inventory.getCurrentItem();
+			if(currentStack != null && currentStack.getItem() instanceof ItemPortableNetworkInterface)
+				ItemPortableNetworkInterface.setNetwork(currentStack, null);
+		}
 	}
 	
 	@Override
