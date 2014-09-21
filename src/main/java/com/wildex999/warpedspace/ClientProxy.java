@@ -14,8 +14,12 @@ import com.wildex999.warpedspace.tiles.renderers.RendererNetworkController;
 import com.wildex999.warpedspace.tiles.renderers.RendererNetworkInterface;
 import com.wildex999.warpedspace.tiles.renderers.RendererNetworkRelayT1;
 
+import com.wildex999.warpedspace.worldrenderers.NetworkDetectorWorldRenderer;
+import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.client.registry.RenderingRegistry;
+import cpw.mods.fml.common.FMLCommonHandler;
+import net.minecraftforge.common.MinecraftForge;
 
 public class ClientProxy extends CommonProxy {
 
@@ -32,5 +36,8 @@ public class ClientProxy extends CommonProxy {
 		RenderingRegistry.registerBlockHandler(new RenderNetworkControllerBlock());
 		RenderingRegistry.registerBlockHandler(new RenderNetworkRelayT1Block());
 		RenderingRegistry.registerBlockHandler(new RenderNetworkAgentBlock());
+
+        //World renderers
+        MinecraftForge.EVENT_BUS.register(new NetworkDetectorWorldRenderer());
 	}
 }

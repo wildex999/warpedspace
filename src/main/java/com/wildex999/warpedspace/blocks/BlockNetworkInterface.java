@@ -1,5 +1,6 @@
 package com.wildex999.warpedspace.blocks;
 
+import com.wildex999.warpedspace.TickHandler;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
@@ -52,8 +53,12 @@ public class BlockNetworkInterface extends BlockBase {
 	public void breakBlock(World world, int x, int y, int z, Block block, int metadata)
 	{
 		TileNetworkInterface tile = (TileNetworkInterface)world.getTileEntity(x, y, z);
-		if(tile != null)
-			dropInventory(tile, world, x, y, z);
+		if(tile != null) {
+            boolean inWorldTick = TickHandler.inWorldTick;
+            TickHandler.inWorldTick = false; //Make sure we drop the Interface inventory, not the hosted one
+            dropInventory(tile, world, x, y, z);
+            TickHandler.inWorldTick = inWorldTick;
+        }
 		
 		super.breakBlock(world, x, y, z, block, metadata);
 	}

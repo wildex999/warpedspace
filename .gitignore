@@ -3,3 +3,7 @@ bin/
 .gradle/
 gradle/
 .classpath
+out/
+wx9_warped_space.ipr
+wx9_warped_space.iml
+wx9_warped_space.iws

@@ -169,9 +169,16 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 				
 				if(currentEntry != null) //TODO: Decide if we failed due to the entry not existing or permissions denied us.
 				{
-
-					storedEntry = currentEntry.name;
-					storedGid = currentEntry.gid;
+					//Make sure we're not hosting ourself(Causes a LOT of problems due to infinite loops)
+					if(currentEntry.world == this.worldObj && currentEntry.x == xCoord && currentEntry.y == yCoord && currentEntry.z == zCoord)
+					{
+						currentEntry = null;
+					}
+					else
+					{
+						storedEntry = currentEntry.name;
+						storedGid = currentEntry.gid;
+					}
 				}
 				
 				if(currentEntry != oldEntry)
@@ -216,6 +223,18 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		inventoryManager.update();
 		//TODO: Call onNeighborUpdate(tile)
 		worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord, zCoord, getBlockType());
+        //If we are a redstone provider, we need to inform neighbors one step further out
+        //about our update(For weak redstone through a block)
+        if(redstoneManager.gotPower)
+        {
+            worldObj.notifyBlocksOfNeighborChange(xCoord+1, yCoord, zCoord, getBlockType());
+            worldObj.notifyBlocksOfNeighborChange(xCoord-1, yCoord, zCoord, getBlockType());
+            worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord+1, zCoord, getBlockType());
+            worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord-1, zCoord, getBlockType());
+            worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord, zCoord+1, getBlockType());
+            worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord, zCoord-1, getBlockType());
+        }
+
 		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 	}
 	
@@ -389,11 +408,6 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		entryUpdated();
 		sendGuiUpdate(null, false);
 		
-		//and pass the message on to managers
-		//TODO: Check redstone update, item update etc.
-		
-		//TODO: We ourself call onNeighborBlockChange(Avoid infinite loops!)
-		
 		return false;
 	}
 
@@ -421,7 +435,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
         
         //TODO: Only send tile data if client does not have chunk loaded(What about if client unloads chunk afterwards?)
         TileEntity tile = currentEntry.world.getTileEntity(currentEntry.x, currentEntry.y, currentEntry.z);
-        if(tile != null)
+        if(tile != null && tile != this)
         {
         	Packet packet = tile.getDescriptionPacket();
         	//Only send TileData if it's already in the form of NBT
@@ -503,6 +517,8 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	
     @Override
     public int getSizeInventory() {
+        if(worldObj.isRemote || !TickHandler.inWorldTick)
+            return super.getSizeInventory();
     	return inventoryManager.getSizeInventory();
     }
 

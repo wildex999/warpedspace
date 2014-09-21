@@ -56,10 +56,4 @@ public class ItemNetworkCard extends ItemBase {
 		tag.setInteger("networkId", networkId);
 		
 	}
-	
-	@Override
-	public IIcon getIcon(ItemStack stack, int pass) {
-		// TODO Auto-generated method stub
-		return super.getIcon(stack, pass);
-	}
 }

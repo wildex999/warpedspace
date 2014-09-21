@@ -12,6 +12,8 @@ import com.wildex999.warpedspace.tiles.TileNetworkInterface;
 import com.wildex999.warpedspace.warpednetwork.CoreNetworkManager;
 import com.wildex999.warpedspace.warpednetwork.WarpedNetwork;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
@@ -23,8 +25,8 @@ import net.minecraft.world.World;
 
 public class ItemPortableNetworkInterface extends ItemBase {
 	public static final String itemName = "Portable Network Interface";
-	private static HashMap<EntityPlayer, TileNetworkInterface> tileMap = new HashMap<EntityPlayer, TileNetworkInterface>();
-	private static HashMap<EntityPlayer, TileNetworkInterface> tileMapClient = new HashMap<EntityPlayer, TileNetworkInterface>(); //For single-player
+	public static HashMap<EntityPlayer, TileNetworkInterface> tileMap = new HashMap<EntityPlayer, TileNetworkInterface>();
+	public static HashMap<EntityPlayer, TileNetworkInterface> tileMapClient = new HashMap<EntityPlayer, TileNetworkInterface>(); //For single-player
 	private static int relayUpdateTick = 20;
 	
 	public ItemPortableNetworkInterface() {
@@ -32,12 +34,6 @@ public class ItemPortableNetworkInterface extends ItemBase {
 		setCreativeTab(CreativeTabs.tabRedstone);
 		this.setMaxStackSize(1);
 		ItemLibrary.register(this);
-	}
-	
-	//Called when a player logs out to remove the proxy TileEntity
-	public static void onPlayerLogout() {
-		//TODO: Add event
-		//tileMap.remove(key)
 	}
 	
 	//Get the proxy Interface for a player

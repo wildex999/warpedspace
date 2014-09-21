@@ -3,6 +3,7 @@ package com.wildex999.warpedspace;
 import java.util.ArrayList;
 import java.util.List;
 
+import cpw.mods.fml.common.eventhandler.EventPriority;
 import net.minecraft.client.Minecraft;
 
 import com.wildex999.utils.ModLog;
@@ -19,6 +20,7 @@ import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.ServerTickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
 import cpw.mods.fml.relauncher.Side;
+import org.apache.logging.log4j.core.jmx.Server;
 
 public class TickHandler {
 
@@ -55,6 +57,25 @@ public class TickHandler {
 		else
 			inWorldTick = false;
 	}
+
+    //Call at beginning of ServerTickEvent(Hopefulyl before all other mods)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onServerTickInterfaceHandlerStart(ServerTickEvent event) {
+        if(event.phase == Phase.END) {
+            //Some mods do item/inventory handling at this stage
+            //(This is after network handling, so it's ok)
+            inWorldTick = true;
+        }
+    }
+    //Call at end of ServerTickEvent(Hopefully after all other mods)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onServerTickInterfaceHandlerEnd(ServerTickEvent event) {
+        if(event.phase == Phase.END) {
+            inWorldTick = false;
+        }
+    }
+
+
 	
 	@SubscribeEvent
 	public void onClientTick(ClientTickEvent event) {

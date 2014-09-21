@@ -24,6 +24,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.event.world.WorldEvent;
 
@@ -312,24 +313,55 @@ public class WarpedNetwork {
 		return null;
 	}
 	
+	//Return a List of relays who overlap the given circle
+	public List<INetworkRelay> getRelaysOverlappingCircle(World world, int x, int z, int radius, WarpedNetwork network) {
+		LinkedList<INetworkRelay> relayList = new LinkedList<INetworkRelay>();
+		long r1 = radius*radius;
+		for(INetworkRelay relay : relayMap) {
+            if(network != null && relay.getNetwork() != network)
+                continue; //Allow all networks if 'network' is null
+			if(relayOverlapCircle(relay, world, x, z, r1))
+				relayList.add(relay);
+		}
+		
+		return relayList;
+	}
+	
+	//Check if the given relay overlaps the provided circle. radius2 is the circle radius squared
+	public boolean relayOverlapCircle(INetworkRelay relay, World world, int x, int z, long radius2) {
+		if(world != relay.getWorld()) {
+            return false;
+        }
+		long xDistance = x - relay.getPosX();
+		long zDistance = z - relay.getPosZ();
+		long distance = (xDistance*xDistance) + (zDistance*zDistance);
+		long r2 = relay.getRadius()*relay.getRadius();
+		
+		if(distance > (radius2+r2)) {
+            return false;
+        }
+		return true;
+	}
+
+	
 	//Return true if node is in range of the given relay
 	public boolean relayInRange(INode node, INetworkRelay relay)
 	{
 		//For now we only do two dimensional radius
 		int nX = node.getPosX();
 		int nZ = node.getPosZ();
-		
+
 		//Do Radius check
 		int diffX = nX - relay.getPosX();
 		int diffZ = nZ - relay.getPosZ();
-		
+
 		//This overflows on larger radiuses and distances, so got long(Can still possibly overflow on int.MAX_VALUE?)
 		long diffX2 = ((long)diffX*(long)diffX);
 		long diffZ2 = ((long)diffZ*(long)diffZ);
 		long radius2 = ((long)relay.getRadius()*(long)relay.getRadius());
 		if(diffX2 + diffZ2 <= radius2)
 			return true;
-		
+
 		return false;
 	}
 	
@@ -406,5 +438,10 @@ public class WarpedNetwork {
 	public void unregisterTileListener(ITileListener listener) {
 		tileListeners.remove(listener);
 	}
-	
+
+    @Override
+    public String toString() {
+        String str = super.toString() + " | Id: " + this.id + " Name: " + this.name;
+        return str;
+    }
 }

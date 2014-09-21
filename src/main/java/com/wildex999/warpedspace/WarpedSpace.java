@@ -1,5 +1,6 @@
 package com.wildex999.warpedspace;
 
+import com.mixpanel.mixpanelapi.MixpanelAPI;
 import com.wildex999.utils.ModLog;
 import com.wildex999.warpedspace.blocks.BlockLibrary;
 import com.wildex999.warpedspace.gui.BasicNetworkRelayGui;
@@ -8,12 +9,18 @@ import com.wildex999.warpedspace.gui.NetworkInterfaceGui;
 import com.wildex999.warpedspace.gui.NetworkManagerGui;
 import com.wildex999.warpedspace.gui.PortableNetworkInterfaceGui;
 import com.wildex999.warpedspace.gui.WarpedControllerGui;
+import com.wildex999.warpedspace.handlers.ClientPlayerJoin;
+import com.wildex999.warpedspace.handlers.PortableNetworkInterfaceEventHandler;
 import com.wildex999.warpedspace.items.ItemLibrary;
+import com.wildex999.warpedspace.items.ItemPortableNetworkInterface;
 import com.wildex999.warpedspace.networking.Networking;
 import com.wildex999.warpedspace.proxyplayer.ProxyContainer;
 import com.wildex999.warpedspace.warpednetwork.CoreNetworkManager;
 import com.wildex999.warpedspace.warpednetwork.NetworkSaveHandler;
 
+import com.wildex999.warpedspace.worldrenderers.NetworkDetectorWorldRenderer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraftforge.common.MinecraftForge;
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -29,6 +36,9 @@ import cpw.mods.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
+
+import com.mixpanel.mixpanelapi.MessageBuilder;
+import org.json.JSONObject;
 
 @Mod(modid = WarpedSpace.MODID, version = WarpedSpace.VERSION)
 public class WarpedSpace {
@@ -56,14 +66,14 @@ public class WarpedSpace {
     public void init(FMLInitializationEvent event)
     {
     	this.instance = this;
-    	
+        if(event.getSide() == Side.CLIENT) {
+            isClient = true;
+        }
+
     	BlockLibrary.init();
     	ItemLibrary.init();
     	
     	Networking.init();
-    	
-    	if(event.getSide() == Side.CLIENT)
-    		isClient = true;
     	
     	guiHandler = new GuiHandler();
     	NetworkRegistry.INSTANCE.registerGuiHandler(this, guiHandler);
@@ -84,9 +94,12 @@ public class WarpedSpace {
     	FMLCommonHandler.instance().bus().register(this);
     	FMLCommonHandler.instance().bus().register(CoreNetworkManager.serverNetworkManager);
     	FMLCommonHandler.instance().bus().register(new TickHandler());
+        FMLCommonHandler.instance().bus().register(new PortableNetworkInterfaceEventHandler());
+        FMLCommonHandler.instance().bus().register(new ClientPlayerJoin());
     	
     	proxy.registerRenderers();
-    	
+
+
     	ModLog.logger.info("Warped Space initialized!");
     }
     
@@ -181,9 +194,9 @@ public class WarpedSpace {
  * 
  * Glasses of removal
  * -------------------
- * - Make certain blocks invisible for a short range(3 debth?).
+ * - Make certain blocks invisible for a short range(3 depth?).
  * - Ores are always invisible and config with blocks that are to be invisible.
- * - Primary use to see wires beneach blocks.
+ * - Primary use to see wires beneath blocks.
  * 
  * Glasses of entities
  * -------------------
@@ -292,7 +305,7 @@ public class WarpedSpace {
  * - Inter Dimensional Link
  * -- Link Relay stations on two dimensions
  * 
- * - Warped Node
+ * - Agent Node
  * -- Adds Tiles to the network
  * -- Joins Relays
  * -- Has Cost per operation on tiles(Energy, tile, fluid, redstone)
@@ -302,7 +315,7 @@ public class WarpedSpace {
  * -- However, the tile entity can neither push or pull through the basic Warped Node.
  * -- Can upgrade to Advanced Warped Node(Tier 2?) giving it the capability to push and pull.
  * 
- * - Access Node
+ * - Interface Node
  * -- Links to a specific Tile on the network
  * -- Acts as remote access to the linked Tile Entity.
  * -- No energy cost by itself
@@ -331,4 +344,12 @@ public class WarpedSpace {
  * 
  * - Relay Loader upgrade
  * -- Allow relay to do it's work even when chunk is unloaded.
+ * 
+ * - Digital Sign
+ * -- Like a normal sign, but allows much more text
+ * -- When player is close enough and looks at sign, zoom in to make text readable
+ * -- Allow colors
+ *
+ * - Energy Discharger
+ * -- Remove RF from items(Not store, void pipe for energy)
  * */

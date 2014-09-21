@@ -50,6 +50,7 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	private static final Random rand = new Random();
 	private BlockNetworkAgent block;
 	private AgentEntry[] entries = new AgentEntry[sideCount]; //Internal ID for each direction(-1 if not joined)
+	private boolean inNeighborUpdate;
 	
 	@SideOnly(Side.CLIENT)
 	private boolean[] sideState;
@@ -78,6 +79,7 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 			nameList[i] = null;
 		}
 		watchers = new HashSet<EntityPlayer>();
+		inNeighborUpdate = false;
 		
 		if(WarpedSpace.isClient)
 			clientInit();
@@ -139,15 +141,17 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	}
 	
 	//Check for neighbor tile entities
-	//TODO: Create function for single side update
 	public void updateNeighborTiles()
 	{
-		if(worldObj.isRemote)
+		if(worldObj.isRemote || inNeighborUpdate)
 			return;
+		inNeighborUpdate = true; //Avoid infinite Neighbor update loop
 		
 		//Test if changed compared to what is currently
 		for(int i = 0; i < sideCount; i++)
 			updateNeighborSide(i);
+		
+		inNeighborUpdate = false;
 		
 		sendNetworkUpdate(null, false);
 	}

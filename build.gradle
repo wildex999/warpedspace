@@ -19,11 +19,15 @@ apply plugin: 'forge'
 
 version = "0.1.001.001"
 group= "com.wildex999.warpedspace" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "WarpedSpace"
+archivesBaseName = "warpedspace"
 
 minecraft {
     version = "1.7.10-10.13.0.1180"
     assetDir = "eclipse/assets"
+}
+
+configurations {
+	releaseJars
 }
 
 dependencies {
@@ -40,6 +44,8 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
+	compile 'com.mixpanel:mixpanel-java:1.4.2'
+	releaseJars 'com.mixpanel:mixpanel-java:1.4.2'
 }
 
 processResources
@@ -60,4 +66,7 @@ processResources
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
     }
+}
+jar {
+	from configurations.releaseJars.collect { it.isDirectory() ? it : zipTree(it) }
 }

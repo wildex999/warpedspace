@@ -17,10 +17,11 @@ public class InterfaceRedstoneManager {
 	
 	private static int sideCount = 6;
 	
-	public byte redStonePowerCost = 1; //How much to reduce the restone power when proxying it
+	public byte redStonePowerCost = 0; //How much to reduce the restone power when proxying it
 	private byte[] weakRedstone = new byte[sideCount];
 	private byte[] strongRedstone = new byte[sideCount];
-	private boolean indirectPowered = false;
+    public boolean gotPower;
+	//private boolean indirectPowered = false;
 	
 	public InterfaceRedstoneManager(TileNetworkInterface tile) {
 		this.tile = tile;
@@ -28,11 +29,12 @@ public class InterfaceRedstoneManager {
 	
 	//Check our hosted block for it's weak and strong redstone
 	public void update() {
+        gotPower = true;
 		AgentEntry entry = tile.currentEntry;
 		boolean zero = false;
 		if(entry == null || !entry.active || !entry.isValid())
 			zero = true;
-		else if(!entry.agent.isNetworkReachable())
+		else if(!entry.agent.isNetworkReachable() || !entry.block.canProvidePower())
 			zero = true;
 		
 		for(int i = 0; i < sideCount; i++)
@@ -48,6 +50,8 @@ public class InterfaceRedstoneManager {
 				strongRedstone[i] = (byte)entry.block.isProvidingStrongPower(entry.world, entry.x, entry.y, entry.z, i);
 			}
 		}
+        if(zero)
+            gotPower = false;
 		/*if(zero)
 			indirectPowered = false;
 		else
@@ -56,13 +60,13 @@ public class InterfaceRedstoneManager {
 
 	public int getHostedWeakPower(int dir) {
 		if(weakRedstone[dir] > 0)
-			return weakRedstone[dir]-1;
+			return weakRedstone[dir]-redStonePowerCost;
 		/*else if(indirectPowered)
 			return 1;*/ //Problem with this is that it would always give 1 power even if redstone wire did not point in that direction
 		return 0;
 	}
 	
 	public int getHostedStrongPower(int dir) {
-		return strongRedstone[dir]-1;
+		return strongRedstone[dir]-redStonePowerCost;
 	}
 }

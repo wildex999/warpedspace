@@ -6,6 +6,7 @@ import com.wildex999.warpedspace.networking.netinterface.MessageCSWatchList;
 import com.wildex999.warpedspace.networking.netinterface.MessageSCInterfaceUpdate;
 import com.wildex999.warpedspace.networking.netinterface.MessageTilesList;
 import com.wildex999.warpedspace.networking.netinterface.MessageTilesUpdate;
+import com.wildex999.warpedspace.networking.networkdetector.MessageDetectorRelayList;
 import com.wildex999.warpedspace.networking.warpednetwork.MessageCSNetworkCreate;
 import com.wildex999.warpedspace.networking.warpednetwork.MessageCSNetworkUpdate;
 import com.wildex999.warpedspace.networking.warpednetwork.MessageSCNetworkList;
@@ -47,6 +48,7 @@ public class Networking {
 		channel.registerMessage(MessageProxyChunk.Handler.class, MessageProxyChunk.class, getFreeId(), Side.CLIENT);
 		channel.registerMessage(MessageRelayUpdate.Handler.class, MessageRelayUpdate.class, getFreeId(), Side.CLIENT);
 		channel.registerMessage(MessageTilesUpdate.Handler.class, MessageTilesUpdate.class, getFreeId(), Side.CLIENT);
+        channel.registerMessage(MessageDetectorRelayList.Handler.class, MessageDetectorRelayList.class, getFreeId(), Side.CLIENT);
 		
 		//Release 2
 		//Release 3

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.wildex999.warpedspace.WarpedSpace;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.World;
 
