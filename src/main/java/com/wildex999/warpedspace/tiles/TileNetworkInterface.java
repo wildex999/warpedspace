@@ -5,6 +5,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import com.wildex999.warpedspace.blocks.BlockLibrary;
+import com.wildex999.warpedspace.networking.Networking;
+import com.wildex999.warpedspace.networking.netinterface.MessageInterfaceTileUpdate;
+import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -14,6 +19,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.server.management.PlayerManager;
 import net.minecraft.tileentity.TileEntity;
 import akka.actor.FSM.State;
 
@@ -39,6 +45,7 @@ import com.wildex999.warpedspace.warpednetwork.iface.InterfaceRedstoneManager;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraft.world.WorldServer;
 
 public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, ITileListener, IEntryListener, ISidedInventory {
 	private HashSet<EntityPlayer> watchers;
@@ -56,10 +63,14 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	//Client data
 	@SideOnly(Side.CLIENT)
 	public Block hostBlock;
+    @SideOnly(Side.CLIENT)
+    public int hostMeta;
 	@SideOnly(Side.CLIENT)
 	public int x,y,z;
 	@SideOnly(Side.CLIENT)
 	public TileEntity proxyTile;
+    @SideOnly(Side.CLIENT)
+    public static TileNetworkInterface hostingInterface; //Current Interface replaced by hosted TE
 	
 	public TileNetworkInterface() {
 		inventoryName = "Network Interface";
@@ -237,7 +248,34 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 
 		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 	}
-	
+
+    //Replace TileEntity at this position with the hosted TE
+    //for network update.
+    @SideOnly(Side.CLIENT)
+    public void clientHostTile(boolean hostTile) {
+        if(hostTile) {
+            if (proxyTile == null)
+                return;
+
+            hostingInterface = this;
+            worldObj.setBlock(xCoord, yCoord, zCoord, hostBlock, hostMeta, 1);
+            worldObj.setTileEntity(xCoord, yCoord, zCoord, proxyTile);
+            ModLog.logger.info("Client host");
+        } else {
+            if(hostingInterface == null)
+            {
+                ModLog.logger.info("Hit null hostingInterface while swapping back. This can mean the world is corrupted" +
+                        " or there is an internal problem. X: "+ xCoord +" Y: "+ yCoord +" Z:" + zCoord);
+                return;
+            }
+            this.validate();
+            worldObj.setBlock(xCoord, yCoord, zCoord, BlockLibrary.networkInterface);
+            worldObj.setTileEntity(xCoord, yCoord, zCoord, hostingInterface);
+            hostingInterface = null;
+            ModLog.logger.info("Client no-host");
+        }
+    }
+
 	@Override
 	public boolean joinNetwork(WarpedNetwork network) {
 		if(!super.joinNetwork(network))
@@ -263,8 +301,16 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		
 		return true;
 	}
-	
-	@Override
+
+    @Override
+    public boolean shouldRenderInPass(int pass) {
+        if(proxyTile == null)
+            return pass == 0;
+        else
+            return proxyTile.shouldRenderInPass(pass);
+    }
+
+    @Override
 	public void leaveNetwork() {
 		if(currentNetwork == null)
 			return;
@@ -437,21 +483,36 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
         TileEntity tile = currentEntry.world.getTileEntity(currentEntry.x, currentEntry.y, currentEntry.z);
         if(tile != null && tile != this)
         {
-        	Packet packet = tile.getDescriptionPacket();
-        	//Only send TileData if it's already in the form of NBT
-        	if(packet instanceof S35PacketUpdateTileEntity)
-        	{
-        		S35PacketUpdateTileEntity dataPacket = (S35PacketUpdateTileEntity)packet;
-        		//AT not working(As usual, no damn info about it) resorting to reflection(slow?)
-        		try
-        		{
-	        		Field f = dataPacket.getClass().getDeclaredField("field_148860_e");
-	        		f.setAccessible(true);
-	        		NBTTagCompound tileData = (NBTTagCompound)f.get(dataPacket);
-	        		data.setTag("tileData", tileData);
-        		}
-        		catch(Exception e) {} //Ignore Ignore Ignore
-        	}
+            int oldX = tile.xCoord;
+            int oldY = tile.yCoord;
+            int oldZ = tile.zCoord;
+            tile.xCoord = xCoord;
+            tile.yCoord = yCoord;
+            tile.zCoord = zCoord;
+
+            Packet tilePacket = tile.getDescriptionPacket();
+            if(tilePacket != null) {
+
+
+                MessageBase messageUpdateStart = new MessageInterfaceTileUpdate(this, true);
+                MessageBase messageUpdateEnd = new MessageInterfaceTileUpdate(this, false);
+
+                //TODO: Now we are sending to all players * players getting this update
+                PlayerManager playerManager = ((WorldServer) worldObj).getPlayerManager();
+                PlayerManager.PlayerInstance chunkInstance = playerManager.getOrCreateChunkWatcher(xCoord >> 4, zCoord >> 4, false);
+
+                for (Object obj : chunkInstance.playersWatchingChunk) {
+                    EntityPlayerMP player = (EntityPlayerMP) obj;
+
+                    messageUpdateStart.queueToPlayer(player); //Set hosted tile on client
+                    MessageBase.queueToPlayer(player, tilePacket); //Update hosted tile
+                    messageUpdateEnd.queueToPlayer(player); //Reset Interface tile on client
+                }
+            }
+
+            tile.xCoord = oldX;
+            tile.yCoord = oldY;
+            tile.zCoord = oldZ;
         }
         
         return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, 0, data);
@@ -468,34 +529,31 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		z = data.getInteger("z");
 		
 		Block oldBlock = hostBlock;
+        //TODO: Use block id instead of itemName
 		hostBlock = Block.getBlockFromName(itemName);
+        hostMeta = itemMeta;
 		worldObj.setBlockMetadataWithNotify(xCoord, yCoord, zCoord, itemMeta, 1);
 		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		
 		if(hostBlock == null || hostBlock != oldBlock)
 			proxyTile = null;
-		
+
 		//Proxy TileEntity
-		if(data.hasKey("tileData") && hostBlock != null)
-		{
-			if(proxyTile == null)
-			{
-				if(hostBlock.hasTileEntity(itemMeta))
-				{
-					proxyTile = hostBlock.createTileEntity(getWorldObj(), itemMeta);
-					if(proxyTile != null)
-						proxyTile.setWorldObj(getWorldObj()); //Share the same world as the Interface
-				}
-			}
-			if(proxyTile != null)
-			{
-				NBTTagCompound tileData = data.getCompoundTag("tileData");
-				//TODO: This is a crash waiting to happen, add a filter in config file for Block/Tiles this does not work with
-				proxyTile.onDataPacket(net, new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 0, tileData));
-			}
-		}
+        if(proxyTile == null && hostBlock != null)
+        {
+            if(hostBlock.hasTileEntity(itemMeta))
+            {
+                proxyTile = hostBlock.createTileEntity(getWorldObj(), itemMeta);
+                if(proxyTile != null) {
+                    proxyTile.setWorldObj(getWorldObj()); //Share the same world as the Interface
+                    proxyTile.xCoord = xCoord;
+                    proxyTile.yCoord = yCoord;
+                    proxyTile.zCoord = zCoord;
+                }
+            }
+        }
 		
-		ModLog.logger.info("DATA PACKET: " + hostBlock);
+		ModLog.logger.info("DATA PACKET: " + hostBlock + " Tile: " + proxyTile);
 		
 	}
 	

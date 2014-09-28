@@ -16,7 +16,8 @@ import com.wildex999.warpedspace.tiles.TileNetworkAgent;
 import com.wildex999.warpedspace.tiles.TileNetworkInterface;
 
 public class BlockNetworkInterface extends BlockBase {
-	public final String name = "Network Interface";
+	public String name = "Network Interface";
+    public static int currentRenderPass = 0;
 	
 	public BlockNetworkInterface()
 	{
@@ -72,13 +73,29 @@ public class BlockNetworkInterface extends BlockBase {
 	public boolean isOpaqueCube() {
 		return false;
 	}
-	
-	@Override
+
+    @Override
+    public boolean isNormalCube() {
+        return false;
+    }
+
+    @Override
 	public boolean renderAsNormalBlock() {
-		return true;
+		return false;
 	}
-	
-	//---REDSTONE---//
+
+    @Override
+    public boolean canRenderInPass(int pass) {
+        currentRenderPass = pass;
+        return true;
+    }
+
+    @Override
+    public int getRenderBlockPass() {
+        return 1;
+    }
+
+    //---REDSTONE---//
 	
 	@Override
 	public boolean canProvidePower() {

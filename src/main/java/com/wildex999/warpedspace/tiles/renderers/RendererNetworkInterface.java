@@ -1,5 +1,6 @@
 package com.wildex999.warpedspace.tiles.renderers;
 
+import com.wildex999.warpedspace.blocks.BlockLibrary;
 import org.lwjgl.opengl.GL11;
 
 import com.wildex999.utils.ModLog;
@@ -41,6 +42,10 @@ public class RendererNetworkInterface extends RendererTileBase {
 		}
 		TileNetworkInterface tileInterface = (TileNetworkInterface)baseTile;
 		Block hostBlock = tileInterface.hostBlock;
+        int hostMeta = tileInterface.hostMeta;
+        int tileX = tileInterface.xCoord;
+        int tileY = tileInterface.yCoord;
+        int tileZ = tileInterface.zCoord;
 		
 		if(hostBlock == null)
 		{
@@ -55,26 +60,42 @@ public class RendererNetworkInterface extends RendererTileBase {
 		int otherX = tileInterface.x;
 		int otherY = tileInterface.y;
 		int otherZ = tileInterface.z;
-		
-		TileEntity renderTile = worldObj.getTileEntity(otherX, otherY, otherZ);
-		if(renderTile == null)
-		{
+
+        TileEntity renderTile;
+		//TileEntity renderTile = worldObj.getTileEntity(otherX, otherY, otherZ);
+		//if(renderTile == null)
+		//{
 			renderTile = tileInterface.proxyTile;
 			if(renderTile == null)
 			{
 				renderInterfaceOutline(x, y, z);
 				return;
 			}
-		}
-		
+		//}
+
+        //ModLog.logger.info("TEST1");
+        Block prevBlock = worldObj.getBlock(tileX, tileY, tileZ);
+        if(tileInterface.proxyTile != null) {
+            worldObj.setTileEntity(tileX, tileY, tileZ, tileInterface.proxyTile);
+        }
+
 		float scale = 0.65f;
 		float scaleInv = 1f/0.65f;
 		float center = 1*(1-scale);
 		GL11.glScalef(scale, scale, scale);
 		renderer.renderTileEntityAt(renderTile, (x*scaleInv)+center, (y*scaleInv)+center, (z*scaleInv)+center, time);
 		GL11.glScalef(scaleInv, scaleInv, scaleInv);
-		renderInterfaceOutline(x, y, z);
-		
+
+        if(tileInterface.proxyTile != null) {
+            tileInterface.validate();
+            worldObj.setTileEntity(tileX, tileY, tileZ, tileInterface);
+            tileInterface.proxyTile.validate();
+        }
+
+        renderInterfaceOutline(x, y, z);
+
+
+
 		return;
 	}
 	

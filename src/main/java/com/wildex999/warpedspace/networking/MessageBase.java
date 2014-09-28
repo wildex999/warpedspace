@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import com.wildex999.utils.ModLog;
+import net.minecraft.network.Packet;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.netty.buffer.ByteBuf;
@@ -24,13 +26,33 @@ public abstract class MessageBase implements IMessage {
 	
 	//Queued messages are mostly used by GUI to send initial status messages,
 	//Queuing the message to send after the GUI is done initializing on the client.
-	private class QueuedMessage {
-		public EntityPlayerMP player;
-		public MessageBase message;
-		
-		public QueuedMessage(EntityPlayerMP player, MessageBase message)  { 
+	private static class QueuedMessage {
+		public EntityPlayerMP player = null;
+		public IMessage message = null;
+        public Packet packet = null;
+        public Integer dimensionId = null;
+        public TargetPoint point = null;
+
+        //Queue to player
+		public QueuedMessage(EntityPlayerMP player, IMessage message)  {
 			this.player = player; this.message = message;
 		}
+        public QueuedMessage(EntityPlayerMP player, Packet packet) {
+            this.player = player;
+            this.packet = packet;
+        }
+
+        //Queue to dimension
+        public QueuedMessage(Integer dimensionId, IMessage message) {
+            this.dimensionId = dimensionId;
+            this.message = message;
+        }
+
+        //Queue to all around
+        public QueuedMessage(TargetPoint point, IMessage message) {
+            this.point = point;
+            this.message = message;
+        }
 	}
 	private static List<QueuedMessage> queueList = new LinkedList<QueuedMessage>(); 
 	
@@ -83,7 +105,17 @@ public abstract class MessageBase implements IMessage {
 	
 	public static void sendQueuedMessages() {
 		for(QueuedMessage message : queueList) {
-			message.message.sendToPlayer(message.player);
+            if(message.packet != null) {
+                message.player.playerNetServerHandler.sendPacket(message.packet);
+                ModLog.logger.info("Send packet: " + message.packet);
+            }
+            else if(message.player != null)
+                Networking.getChannel().sendTo(message.message, message.player);
+            else if(message.dimensionId != null)
+                Networking.getChannel().sendToDimension(message.message, message.dimensionId);
+            else if(message.point != null)
+                Networking.getChannel().sendToAllAround(message.message, message.point);
+
 		}
 		queueList.clear();
 	}
@@ -100,14 +132,36 @@ public abstract class MessageBase implements IMessage {
 	public void queueToPlayer(EntityPlayerMP player) {
 		queueList.add(new QueuedMessage(player, this));
 	}
+    public static void queueToPlayer(EntityPlayerMP player, IMessage msg) {
+        queueList.add(new QueuedMessage(player, msg));
+    }
+    public static void queueToPlayer(EntityPlayerMP player, Packet packet) {
+        queueList.add(new QueuedMessage(player, packet));
+    }
 	
 	public void sendToDimension(int dimensionId) {
 		Networking.getChannel().sendToDimension(this, dimensionId);
 	}
+
+    //Queue packet for beginning of next tick
+    public void queueToDimension(int dimensionId) {
+        queueList.add(new QueuedMessage(dimensionId, this));
+    }
+    public static void queueToDimension(int dimensionId, IMessage msg) {
+        queueList.add(new QueuedMessage(dimensionId, msg));
+    }
 	
 	public void sendToAllAround(TargetPoint point) {
 		Networking.getChannel().sendToAllAround(this, point);
 	}
+
+    //Queue packet for beginning of next tick
+    public void queueToAllAround(TargetPoint point) {
+        queueList.add(new QueuedMessage(point, this));
+    }
+    public static void queueToAllAround(TargetPoint point, IMessage msg) {
+        queueList.add(new QueuedMessage(point, msg));
+    }
 	
 	public void sendToAll() {
 		Networking.getChannel().sendToAll(this);

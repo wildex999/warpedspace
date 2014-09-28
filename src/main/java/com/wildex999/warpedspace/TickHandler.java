@@ -29,7 +29,9 @@ public class TickHandler {
 	
 	@SubscribeEvent
 	public void onServerTick(ServerTickEvent event) {
-		
+		if(event.side == Side.CLIENT)
+            return;
+
 		if(event.phase == Phase.START)
 		{
 

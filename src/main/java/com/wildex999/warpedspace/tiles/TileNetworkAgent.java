@@ -365,9 +365,10 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	
 	@Override
 	public void validate() {
+        super.validate();
+
 		if(worldObj.isRemote)
 			return;
-		super.validate();
 		TickHandler.registerListener(this);
 	}
 	

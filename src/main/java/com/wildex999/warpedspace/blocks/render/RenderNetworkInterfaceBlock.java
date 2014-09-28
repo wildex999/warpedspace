@@ -1,5 +1,8 @@
 package com.wildex999.warpedspace.blocks.render;
 
+import com.wildex999.utils.ModLog;
+import com.wildex999.utils.TessellatorMirror;
+import com.wildex999.warpedspace.blocks.BlockNetworkInterface;
 import org.lwjgl.opengl.GL11;
 
 import com.wildex999.warpedspace.tiles.TileBasicNetworkRelay;
@@ -39,17 +42,26 @@ public class RenderNetworkInterfaceBlock implements ISimpleBlockRenderingHandler
 
 		World worldObj = Minecraft.getMinecraft().theWorld;
 		TileEntity baseTile = worldObj.getTileEntity(x, y, z);
-		if(baseTile == null || !(baseTile instanceof TileNetworkInterface))
-			return true;
+		if(baseTile == null || !(baseTile instanceof TileNetworkInterface)) {
+            fillBuffer();
+            return true;
+        }
 		
 		TileNetworkInterface tileInterface = (TileNetworkInterface)baseTile;
 		Block hostBlock = tileInterface.hostBlock;
+        int hostMeta = tileInterface.hostMeta;
 		
-		if(hostBlock == null || hostBlock == block)
-			return true;
+		if(hostBlock == null || hostBlock == block) {
+            fillBuffer();
+            return true;
+        }
+
+        if(!hostBlock.canRenderInPass(BlockNetworkInterface.currentRenderPass)) {
+            fillBuffer();
+            return true;
+        }
 		
 		//This will wreck the rendering performance of blocks, about the same cost as rendering a tile entity?
-		Tessellator.instance.draw();
 		float scale = 0.65f;
 		float scaleInv = 1f/scale;
 		
@@ -58,24 +70,55 @@ public class RenderNetworkInterfaceBlock implements ISimpleBlockRenderingHandler
 		int chunkZ = z>>4;
 		
 		//Positioning of relative to chunk
-		float moveX = (float)(x-(chunkX*16))*(1f-scale);
-		float moveY = (float)(y-(chunkY*16))*(1f-scale);
-		float moveZ = (float)(z-(chunkZ*16))*(1f-scale);
+		float moveX = x*(1f-scale);
+		float moveY = y*(1f-scale);
+	    float moveZ = z*(1f-scale);
 		
 		//Correct offset so we are in the middle
 		moveX += 0.5*(1-scale);
 		moveY += 0.5*(1-scale);
 		moveZ += 0.5*(1-scale);
-		
-		GL11.glTranslatef(moveX, moveY, moveZ);
-		GL11.glScalef(scale, scale, scale);
-		Tessellator.instance.startDrawingQuads();
-		renderer.renderBlockAllFaces(hostBlock, x, y, z);
-		//Compensate positions with scale
-		Tessellator.instance.draw();
-		GL11.glScalef(scaleInv, scaleInv, scaleInv);
-		GL11.glTranslatef(-moveX, -moveY, -moveZ);
-		Tessellator.instance.startDrawingQuads();
+
+        /*Tessellator.instance.draw();
+        GL11.glTranslatef(moveX, moveY, moveZ);
+        GL11.glScalef(scale, scale, scale);
+        Tessellator.instance.startDrawingQuads();*/
+        Tessellator originalTessellator = Tessellator.instance;
+        TessellatorMirror mirrorTessellator = new TessellatorMirror(originalTessellator);
+        Tessellator.instance = mirrorTessellator;
+
+        mirrorTessellator.setScale(scale, scale, scale);
+        mirrorTessellator.setOffset(moveX, moveY, moveZ);
+
+
+        //Some Blocks need to access the Block/TileEntity to render correctly
+        Block prevBlock = worldObj.getBlock(x, y, z);
+
+
+        ModLog.logger.info("TEST2: " + hostBlock + " M: " + hostMeta + " RenderType: " + hostBlock.getRenderType() + " RenderPass: " + hostBlock.getRenderBlockPass());
+        worldObj.setBlock(x, y, z, hostBlock, hostMeta, 0);
+        if(tileInterface.proxyTile != null) {
+            tileInterface.proxyTile.validate();
+            worldObj.setTileEntity(x, y, z, tileInterface.proxyTile);
+        }
+
+        renderer.renderBlockByRenderType(hostBlock, x, y, z);
+
+        //Compensate positions with scale
+        /*Tessellator.instance.draw();
+        GL11.glScalef(scaleInv, scaleInv, scaleInv);
+        GL11.glTranslatef(-moveX, -moveY, -moveZ);
+        Tessellator.instance.startDrawingQuads();*/
+
+
+        Tessellator.instance = originalTessellator;
+
+        worldObj.setBlock(x, y, z, prevBlock, hostMeta, 4);
+        if(tileInterface.proxyTile != null) {
+            tileInterface.validate();
+            worldObj.setTileEntity(x, y, z, tileInterface);
+            tileInterface.proxyTile.validate();
+        }
 
 		return true;
 	}
@@ -91,5 +134,13 @@ public class RenderNetworkInterfaceBlock implements ISimpleBlockRenderingHandler
 		// TODO Auto-generated method stub
 		return 999;
 	}
+
+    public void fillBuffer() {
+        //Since we always run multiple passes, it will crash if given an empty draw buffer
+        Tessellator.instance.addVertex(0,0,0);
+        Tessellator.instance.addVertex(0,0,0);
+        Tessellator.instance.addVertex(0,0,0);
+        Tessellator.instance.addVertex(0,0,0);
+    }
 
 }

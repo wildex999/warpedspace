@@ -74,7 +74,10 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 	
 	@Override
 	public void validate() {
-		super.validate();
+        super.validate();
+
+        if(worldObj.isRemote)
+            return;
 		TickHandler.registerListener(this);
 	}
 	
