@@ -24,11 +24,6 @@ public class ItemNetworkCard extends ItemBase {
 	}
 	
 	@Override
-	public void registerIcons(IIconRegister iconRegister) {
-		this.itemIcon = iconRegister.registerIcon(WarpedSpace.MODID + ":" + itemName);
-	}
-	
-	@Override
 	public void addInformation(ItemStack itemStack, EntityPlayer player, List tooltipList, boolean advanced) {
 		int networkId = getNetworkId(itemStack);
 		WarpedNetwork network = CoreNetworkManager.getInstance(player.worldObj).networks.get(networkId);

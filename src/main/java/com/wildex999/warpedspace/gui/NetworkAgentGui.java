@@ -236,12 +236,8 @@ public class NetworkAgentGui implements IGuiHandler
 			int inputHeight = 24;
 			
 			inputList.clear();
-			inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36 + (inputHeight*1), 170, 20)); //North
-			inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36 + (inputHeight*2), 170, 20)); //South
-			inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36 + (inputHeight*3), 170, 20)); //West
-			inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36 + (inputHeight*4), 170, 20)); //East
-			inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36 + (inputHeight*5), 170, 20)); //Top
-			inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36 + (inputHeight*6), 170, 20)); //Bottom
+            for(int side = 0; side < TileNetworkAgent.sideCount-1; side++)
+			    inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36 + (inputHeight*(side+1)), 170, 20));
 			
 			inputList.add(new GuiTextField(fontRendererObj, this.guiLeft + 65, this.guiTop + 36, 170, 20)); //Node Name
 			
@@ -263,17 +259,17 @@ public class NetworkAgentGui implements IGuiHandler
 			int offsetY = 32;
 			int height = 24;
 			//West
-			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(3*height), 128, 0, 192, 64, 24, height);
+			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(5*height), 128, 0, 192, 64, 24, height);
 			//East
-			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(4*height), 128, 64, 192, 128, 24, height);
+			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(6*height), 128, 64, 192, 128, 24, height);
 			//South
-			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(2*height), 0, 0, 64, 64, 24, height);
+			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(4*height), 0, 0, 64, 64, 24, height);
 			//North
-			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(1*height), 64, 0, 128, 64, 24, height);
+			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(3*height), 64, 0, 128, 64, 24, height);
 			//Top
-			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(5*height), 0, 64, 64, 128, 24, height);
+			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(2*height), 0, 64, 64, 128, 24, height);
 			//Bottom
-			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(6*height), 64, 64, 128, 128, 24, height);
+			this.drawTexturedModalRectUV(this.guiLeft+5, this.guiTop+offsetY+(1*height), 64, 64, 128, 128, 24, height);
 			
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, filterPrev);
 

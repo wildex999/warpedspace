@@ -1,0 +1,6 @@
+[submodule "src/main/java/cofh"]
+	path = src/main/java/cofh
+	url = https://github.com/CoFH/RedstoneFlux-API/tree/master/src/main/java/cofh/
+[submodule "external/rf-api"]
+	path = external/rf-api
+	url = https://github.com/CoFH/RedstoneFlux-API/

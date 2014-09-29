@@ -49,7 +49,13 @@ public class ItemNetworkDetector extends ItemBase {
         public int x;
         public int z;
         public int radius;
-        public RelayInfo(int x, int z, int radius) { this.x = x; this.z = z; this.radius = radius; }
+        public boolean useable;
+        public RelayInfo(int x, int z, int radius, boolean useable) {
+            this.x = x;
+            this.z = z;
+            this.radius = radius;
+            this.useable = useable;
+        }
     }
 
     public ItemNetworkDetector() {
@@ -228,13 +234,13 @@ public class ItemNetworkDetector extends ItemBase {
         MessageBase messageList;
 
         if(network == null) {
-            messageList = new MessageDetectorRelayList(new ArrayList<INetworkRelay>(0));
+            messageList = new MessageDetectorRelayList(new ArrayList<INetworkRelay>(0), null);
         }
         else {
             int posX = (int)Math.floor(player.posX);
             int posZ = (int)Math.floor(player.posZ);
             List<INetworkRelay> relays = network.getRelaysOverlappingCircle(player.getEntityWorld(), posX, posZ, drawRange, network);
-            messageList = new MessageDetectorRelayList(relays);
+            messageList = new MessageDetectorRelayList(relays, network);
         }
 
         messageList.sendToPlayer(player);
@@ -302,8 +308,15 @@ public class ItemNetworkDetector extends ItemBase {
                     long radius2 = ((long)relay.radius*(long)relay.radius);
 
                     if(diffX2 + diffZ2 <= radius2) {
-                        clientDrawRelayCoverage.get(z - drawOffset).set(x - drawOffset, (byte) 1);
-                        break; //No need to check further relays for this coordinate
+                        byte value = 1;
+                        if(!relay.useable)
+                            value = 2;
+                        //TODO: If at center, set value to 3 and 4 to highlight the relay tile
+
+                        clientDrawRelayCoverage.get(z - drawOffset).set(x - drawOffset, value);
+
+                        if(relay.useable)
+                            break; //No need to check further relays for this coordinate
                     }
                 }
             }

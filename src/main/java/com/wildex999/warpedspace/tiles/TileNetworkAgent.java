@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 
+import cofh.api.energy.IEnergyHandler;
+import net.minecraftforge.common.util.ForgeDirection;
 import scala.Int;
 
 import com.wildex999.utils.BlockItemName;
@@ -46,7 +48,7 @@ import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockAccess;
 
-public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotListener, IGuiWatchers {
+public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotListener, IGuiWatchers, IEnergyHandler {
 	private static final Random rand = new Random();
 	private BlockNetworkAgent block;
 	private AgentEntry[] entries = new AgentEntry[sideCount]; //Internal ID for each direction(-1 if not joined)
@@ -62,12 +64,12 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 	private long gidList[] = new long[sideCount]; //Gid's for initial load
 	
 	//Tile Direction Index
-	public static final byte NORTH = 0;
-	public static final byte SOUTH = 1;
-	public static final byte WEST = 2;
-	public static final byte EAST = 3;
-	public static final byte TOP = 4;
-	public static final byte BOTTOM = 5;
+	public static final byte NORTH = 2;
+	public static final byte SOUTH = 3;
+	public static final byte WEST = 4;
+	public static final byte EAST = 5;
+	public static final byte TOP = 1;
+	public static final byte BOTTOM = 0;
 	public static final byte NODENAME = 6;
 	public static final byte sideCount = 7;
 	
@@ -526,6 +528,53 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
 		for(int i=0; i<sideCount; i++)
 			sideState[i] = data.getBoolean("s"+i);
 	}
-	
-	
+
+    @Override
+    public void updateEntity() {
+        super.updateEntity();
+
+        AgentEntry entry = entries[WEST];
+        if(entry == null)
+            return ;
+        TileEntity tile = entry.world.getTileEntity(entry.x, entry.y, entry.z);
+        if(!(tile instanceof IEnergyHandler))
+            return ;
+        IEnergyHandler energyTile = (IEnergyHandler)tile;
+        for(int i=0; i < 6; i++) {
+            int extract = energyTile.extractEnergy(ForgeDirection.VALID_DIRECTIONS[i], energyTile.getEnergyStored(ForgeDirection.VALID_DIRECTIONS[i]), true);
+            ModLog.logger.info("Extract("+i+"): " + extract);
+        }
+    }
+
+    //--RedstoneFlux energy--
+    @Override
+    public int receiveEnergy(ForgeDirection from, int maxReceive, boolean simulate) {
+        ModLog.logger.info("Agent: receiveEnergy: " + maxReceive);
+
+        return 0;
+    }
+
+    @Override
+    public int extractEnergy(ForgeDirection from, int maxExtract, boolean simulate) {
+        ModLog.logger.info("Agent: extractEnergy: " + maxExtract);
+        return 0;
+    }
+
+    @Override
+    public int getEnergyStored(ForgeDirection from) {
+        ModLog.logger.info("Agent: getEnergyStored");
+        return 0;
+    }
+
+    @Override
+    public int getMaxEnergyStored(ForgeDirection from) {
+        ModLog.logger.info("Agent: getMaxEnergyStored");
+        return 0;
+    }
+
+    @Override
+    public boolean canConnectEnergy(ForgeDirection from) {
+        ModLog.logger.info("Agent: canConnectEnergy");
+        return true;
+    }
 }

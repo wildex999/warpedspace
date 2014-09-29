@@ -67,6 +67,7 @@ processResources
         exclude 'mcmod.info'
     }
 }
+
 jar {
 	from configurations.releaseJars.collect { it.isDirectory() ? it : zipTree(it) }
     

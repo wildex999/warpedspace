@@ -9,7 +9,6 @@ public class PortableNetworkInterfaceEventHandler {
     //Called when a player logs out to remove the proxy TileEntity
     @SubscribeEvent
     public void handlePortableNetworkInterface(PlayerEvent.PlayerLoggedOutEvent event) {
-        ModLog.logger.info("Player logout event PORTABLE!");
         ItemLibrary.itemPortableNetworkInterface.tileMap.remove(event.player);
     }
 }

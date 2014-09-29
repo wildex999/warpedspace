@@ -44,7 +44,7 @@ public class NetworkDetectorWorldRenderer {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(1f, 1f, 1f, 0.25f); //alpha must be > 0.1
+        GL11.glColor4f(1f, 1f, 1f, 0.25f);
 
         tessellator.startDrawingQuads();
 
@@ -54,14 +54,20 @@ public class NetworkDetectorWorldRenderer {
             List<Byte> zList = detector.clientDrawRelayCoverage.get(drawZ-drawOffset);
             for(int drawX = drawOffset; drawX < detector.drawRange; drawX++)
             {
-                if(zList.get(drawX-drawOffset) == 0)
+                byte value = zList.get(drawX-drawOffset);
+                if(value == 0)
                     continue;
+                else if(value == 2)
+                    tessellator.setColorRGBA_F(1f, 0f, 0f, 0.25f);
 
                 tessellator.setTranslation(detector.drawX + drawX, ((float)player.posY)-1.5f, detector.drawZ + drawZ);
                 tessellator.addVertex(minX, maxY, maxZ);
                 tessellator.addVertex(maxX, maxY, maxZ);
                 tessellator.addVertex(maxX, maxY, minZ);
                 tessellator.addVertex(minX, maxY, minZ);
+
+                if(value == 2) //reset the color
+                    tessellator.setColorRGBA_F(1f, 1f, 1f, 0.25f);
             }
         }
 

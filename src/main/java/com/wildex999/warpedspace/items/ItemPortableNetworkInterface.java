@@ -96,11 +96,6 @@ public class ItemPortableNetworkInterface extends ItemBase {
 	}
 	
 	@Override
-	public void registerIcons(IIconRegister iconRegister) {
-		this.itemIcon = iconRegister.registerIcon(WarpedSpace.MODID + ":" + itemName);
-	}
-	
-	@Override
 	public void addInformation(ItemStack itemStack, EntityPlayer player, List tooltipList, boolean advanced) {
 		WarpedNetwork network = getNetwork(itemStack, player.worldObj);
 		if(network == null)
@@ -134,9 +129,15 @@ public class ItemPortableNetworkInterface extends ItemBase {
 			}
 			tile.onNetworkCardUpdate();
 		}
-		
-		player.openGui(WarpedSpace.instance, PortableNetworkInterfaceGui.GUI_ID, world, (int)player.posX, (int)player.posY, (int)player.posZ);
-		return itemStack;
+
+        if(!player.isSneaking())
+		    player.openGui(WarpedSpace.instance, PortableNetworkInterfaceGui.GUI_ID, world, (int)player.posX, (int)player.posY, (int)player.posZ);
+		else
+        {
+            if(tile.isNetworkReachable() && tile.currentEntry != null && tile.currentEntry.canUse())
+                tile.currentEntry.activateBlock(player, 0, 0f, 0f, 0f);
+        }
+        return itemStack;
 	}
 	
 	//Get the current network for the Portable Interface

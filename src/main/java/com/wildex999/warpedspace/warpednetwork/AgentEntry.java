@@ -1,6 +1,7 @@
 package com.wildex999.warpedspace.warpednetwork;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
@@ -40,6 +41,19 @@ public class AgentEntry {
 			return true;
 		return false;
 	}
+
+    //Return true if this entry is valid for use
+    public boolean canUse() {
+        return (isValid() && active);
+    }
+
+    //Right click block with the given player, at the set side and the current player view roation(Click point)
+    public void activateBlock(EntityPlayer player, int side, float viewX, float viewY, float viewZ) {
+        if(block == null)
+            return;
+
+        block.onBlockActivated(world, x, y, z, player, side, viewX, viewY, viewZ);
+    }
 	
 	//Makes the entry invalid.
 	//Note: Only called AFTER it has been removed from network and agent

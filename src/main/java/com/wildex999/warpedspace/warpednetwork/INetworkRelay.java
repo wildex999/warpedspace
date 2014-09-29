@@ -16,7 +16,7 @@ package com.wildex999.warpedspace.warpednetwork;
  * 
  * Any Nodes within range of the relay will have access to all networks it relay.
  * 
- * Note: The Relays does not have any responsibility in registering/removing Nodes
+ * Note: The Relays does NOT have any responsibility in registering/removing Nodes
  * from the network. It just has to update the nodes if the network becomes unavailable
  * due to loosing either contact with the node or if the relay itself looses contact with
  * the network.

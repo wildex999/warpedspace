@@ -125,7 +125,7 @@ public class MessageActivate extends MessageBase {
         	//TODO: Continue sending tile entity updates
         	
         	//TODO: Get click orientation/Position from either in-game menu or from where the player clicked the Interface
-        	entry.block.onBlockActivated(entry.world, entry.x, entry.y, entry.z, player, 0, 0f, 0f, 0f);
+            entry.activateBlock(player, 0, 0f, 0f, 0f);
         	
             return null;
         }

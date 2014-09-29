@@ -4,6 +4,7 @@ import com.wildex999.warpedspace.items.ItemLibrary;
 import com.wildex999.warpedspace.items.ItemNetworkDetector;
 import com.wildex999.warpedspace.networking.MessageBase;
 import com.wildex999.warpedspace.warpednetwork.INetworkRelay;
+import com.wildex999.warpedspace.warpednetwork.WarpedNetwork;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -16,12 +17,14 @@ public class MessageDetectorRelayList extends MessageBase {
 
     protected List<INetworkRelay> relayList;
     protected List<ItemNetworkDetector.RelayInfo> clientRelayList;
+    protected WarpedNetwork network;
 
     //Receive
     public MessageDetectorRelayList() {}
 
-    public MessageDetectorRelayList(List<INetworkRelay> relayList) {
+    public MessageDetectorRelayList(List<INetworkRelay> relayList, WarpedNetwork network) {
         this.relayList = relayList;
+        this.network = network;
     }
 
     @Override
@@ -33,7 +36,8 @@ public class MessageDetectorRelayList extends MessageBase {
             int x = buf.readInt();
             int z = buf.readInt();
             int radius = buf.readInt();
-            clientRelayList.add(new ItemNetworkDetector.RelayInfo(x, z, radius));
+            boolean useable = buf.readBoolean(); //TODO: Pack this to byte(Java already does?)
+            clientRelayList.add(new ItemNetworkDetector.RelayInfo(x, z, radius, useable));
         }
     }
 
@@ -46,6 +50,7 @@ public class MessageDetectorRelayList extends MessageBase {
             //We ignore y, since relays currently ignore height
             buf.writeInt(relay.getPosZ());
             buf.writeInt(relay.getRadius());
+            buf.writeBoolean(relay.isNetworkAvailable(network));
         }
     }
 

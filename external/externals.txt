@@ -1,0 +1,4 @@
+API's and libraries used by the mod
+
+--rf-api: CoFH/RedstoneFlux-API--
+Copy /src/main/java/cofh into /src/main/java/cofh for RF energy compatibility

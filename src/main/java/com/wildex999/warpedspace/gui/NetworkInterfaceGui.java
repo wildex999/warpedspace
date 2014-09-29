@@ -383,7 +383,6 @@ public class NetworkInterfaceGui implements IGuiHandler {
 				{
 					if(networkState == Messages.online && entryState == Messages.online)
 					{
-						ModLog.logger.info("Send screen: " + this);
 						GuiHandler.setPreviousTileGui(this, thisId, tile);
 						MessageBase messageActivate = new MessageActivate(tile, gid, thisId == PortableNetworkInterfaceGui.GUI_ID);
 						messageActivate.sendToServer();
@@ -507,6 +506,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			{
 				//Scroll Wheel
 				int scroll = Mouse.getDWheel();
+                ModLog.logger.info("Scroll: " + scroll);
 				
 				if(scroll != 0)
 					tilesList.onScroll(scroll);
