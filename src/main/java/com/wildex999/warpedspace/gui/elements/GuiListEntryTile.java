@@ -4,6 +4,7 @@ import org.lwjgl.opengl.GL11;
 
 import com.wildex999.utils.BlockItemName;
 import com.wildex999.utils.ModLog;
+import com.wildex999.warpedspace.gui.NetworkInterfaceGui;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -20,12 +21,14 @@ public class GuiListEntryTile extends GuiListEntry{
 	
 	public String tileName;
 	public long gid;
+	public boolean active;
 	protected ItemStack item;
 	
-	public GuiListEntryTile(String name, String tileName, byte tileMeta, long gid) {
+	public GuiListEntryTile(String name, String tileName, byte tileMeta, long gid, boolean active) {
 		super(name);
 		this.tileName = tileName;
 		this.gid = gid;
+		this.active = active;
 
 		item = BlockItemName.getItem(tileName, tileMeta);
 	}
@@ -45,7 +48,12 @@ public class GuiListEntryTile extends GuiListEntry{
 		}
 		
 		int color = 0xFF000000;
-		int colorFont = 0xFFFFFF;
+		int colorFont;
+		
+		if(active)
+			colorFont = 0xFFFFFF;
+		else
+			colorFont = NetworkInterfaceGui.GUI.colorOfflineTile;
 		
 		if(selected)
 			color = 0xFF3DBF1D;

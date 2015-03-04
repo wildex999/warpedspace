@@ -549,32 +549,32 @@ public class TileNetworkAgent extends AgentNodeTile implements IPreTickOneShotLi
     //--RedstoneFlux energy--
     @Override
     public int receiveEnergy(ForgeDirection from, int maxReceive, boolean simulate) {
-        ModLog.logger.info("Agent: receiveEnergy: " + maxReceive);
+        //ModLog.logger.info("Agent: receiveEnergy: " + maxReceive);
 
         return 0;
     }
 
     @Override
     public int extractEnergy(ForgeDirection from, int maxExtract, boolean simulate) {
-        ModLog.logger.info("Agent: extractEnergy: " + maxExtract);
+        //ModLog.logger.info("Agent: extractEnergy: " + maxExtract);
         return 0;
     }
 
     @Override
     public int getEnergyStored(ForgeDirection from) {
-        ModLog.logger.info("Agent: getEnergyStored");
+        //ModLog.logger.info("Agent: getEnergyStored");
         return 0;
     }
 
     @Override
     public int getMaxEnergyStored(ForgeDirection from) {
-        ModLog.logger.info("Agent: getMaxEnergyStored");
+        //ModLog.logger.info("Agent: getMaxEnergyStored");
         return 0;
     }
 
     @Override
     public boolean canConnectEnergy(ForgeDirection from) {
-        ModLog.logger.info("Agent: canConnectEnergy");
+        //ModLog.logger.info("Agent: canConnectEnergy");
         return true;
     }
 }

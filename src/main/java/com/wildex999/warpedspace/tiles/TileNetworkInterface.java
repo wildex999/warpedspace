@@ -8,6 +8,7 @@ import java.util.List;
 import com.wildex999.warpedspace.blocks.BlockLibrary;
 import com.wildex999.warpedspace.networking.Networking;
 import com.wildex999.warpedspace.networking.netinterface.MessageInterfaceTileUpdate;
+
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import net.minecraft.block.Block;
@@ -41,6 +42,7 @@ import com.wildex999.warpedspace.warpednetwork.ITileListener;
 import com.wildex999.warpedspace.warpednetwork.AgentEntry;
 import com.wildex999.warpedspace.warpednetwork.WarpedNetwork;
 import com.wildex999.warpedspace.warpednetwork.iface.InterfaceInventoryManager;
+import com.wildex999.warpedspace.warpednetwork.iface.InterfaceLightManager;
 import com.wildex999.warpedspace.warpednetwork.iface.InterfaceRedstoneManager;
 
 import cpw.mods.fml.relauncher.Side;
@@ -59,6 +61,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	
 	private InterfaceRedstoneManager redstoneManager;
 	private InterfaceInventoryManager inventoryManager;
+	private InterfaceLightManager lightManager;
 	
 	//Client data
 	@SideOnly(Side.CLIENT)
@@ -72,6 +75,8 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
     @SideOnly(Side.CLIENT)
     public static TileNetworkInterface hostingInterface; //Current Interface replaced by hosted TE
 	
+    public boolean marked;
+    
 	public TileNetworkInterface() {
 		inventoryName = "Network Interface";
 
@@ -83,6 +88,9 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		
 		redstoneManager = new InterfaceRedstoneManager(this);
 		inventoryManager = new InterfaceInventoryManager(this);
+		lightManager = new InterfaceLightManager(this);
+		
+		marked = false;
 	}
 	
 	//Send GUI update to clients.
@@ -232,6 +240,8 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	public void entryUpdated() {
 		redstoneManager.update();
 		inventoryManager.update();
+		lightManager.update();
+		
 		//TODO: Call onNeighborUpdate(tile)
 		worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord, zCoord, getBlockType());
         //If we are a redstone provider, we need to inform neighbors one step further out
@@ -260,7 +270,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
             hostingInterface = this;
             worldObj.setBlock(xCoord, yCoord, zCoord, hostBlock, hostMeta, 1);
             worldObj.setTileEntity(xCoord, yCoord, zCoord, proxyTile);
-            ModLog.logger.info("Client host");
+            //ModLog.logger.info("Client host");
         } else {
             if(hostingInterface == null)
             {
@@ -272,7 +282,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
             worldObj.setBlock(xCoord, yCoord, zCoord, BlockLibrary.networkInterface);
             worldObj.setTileEntity(xCoord, yCoord, zCoord, hostingInterface);
             hostingInterface = null;
-            ModLog.logger.info("Client no-host");
+            //ModLog.logger.info("Client no-host");
         }
     }
 
@@ -473,6 +483,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
         
         data.setString("item", BlockItemName.get(currentEntry.block, currentEntry.world, currentEntry.x, currentEntry.y, currentEntry.z));
         data.setByte("meta", (byte)currentEntry.world.getBlockMetadata(currentEntry.x, currentEntry.y, currentEntry.z));
+        data.setByte("light", (byte)getLightManager().getLightLevel());
         
         //Send TileEntity and it's getDescriptionPacket and re-create it on the client while rendering(If the tile is not in client loaded chunk)
         data.setInteger("x", currentEntry.x);
@@ -500,6 +511,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
                 //TODO: Now we are sending to all players * players getting this update
                 PlayerManager playerManager = ((WorldServer) worldObj).getPlayerManager();
                 PlayerManager.PlayerInstance chunkInstance = playerManager.getOrCreateChunkWatcher(xCoord >> 4, zCoord >> 4, false);
+                //List playersWatchingChunk = playerManager.getOrCreateChunkWatcher(xCoord >> 4, zCoord >> 4, false).playersWatchingChunk;
 
                 for (Object obj : chunkInstance.playersWatchingChunk) {
                     EntityPlayerMP player = (EntityPlayerMP) obj;
@@ -524,6 +536,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 
 		String itemName = data.getString("item");
 		byte itemMeta = data.getByte("meta");
+		getLightManager().oldLightValue = data.getByte("light");
 		x = data.getInteger("x");
 		y = data.getInteger("y");
 		z = data.getInteger("z");
@@ -531,9 +544,12 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 		Block oldBlock = hostBlock;
         //TODO: Use block id instead of itemName
 		hostBlock = Block.getBlockFromName(itemName);
+		marked = true;
         hostMeta = itemMeta;
 		worldObj.setBlockMetadataWithNotify(xCoord, yCoord, zCoord, itemMeta, 1);
 		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+		
+		
 		
 		if(hostBlock == null || hostBlock != oldBlock)
 			proxyTile = null;
@@ -553,7 +569,7 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
             }
         }
 		
-		ModLog.logger.info("DATA PACKET: " + hostBlock + " Tile: " + proxyTile);
+		//ModLog.logger.info("DATA PACKET: " + hostBlock + " Tile: " + proxyTile);
 		
 	}
 	
@@ -562,6 +578,12 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
 	
 	public InterfaceRedstoneManager getRedstoneManager() {
 		return redstoneManager;
+	}
+	
+	//---LIGHT---//
+	
+	public InterfaceLightManager getLightManager() {
+		return lightManager;
 	}
 	
 	//---INVENTORY---//
@@ -690,6 +712,8 @@ public class TileNetworkInterface extends BaseNodeTile implements IGuiWatchers, 
     		return super.canExtractItem(p_102008_1_, p_102008_2_, p_102008_3_);
     	return inventoryManager.canExtractItem(p_102008_1_, p_102008_2_, p_102008_3_);
     }
+    
+    
 	
 	
 }

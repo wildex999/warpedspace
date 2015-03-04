@@ -362,8 +362,7 @@ public class NetworkManagerGui implements IGuiHandler
 			super.handleMouseInput();
 			
 			//Scroll Wheel
-			int scroll = Mouse.getDWheel();
-			
+			int scroll = Mouse.getEventDWheel();
 			if(scroll != 0)
 				networkList.onScroll(scroll);
 		}

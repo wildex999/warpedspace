@@ -17,7 +17,7 @@ public class InterfaceRedstoneManager {
 	
 	private static int sideCount = 6;
 	
-	public byte redStonePowerCost = 0; //How much to reduce the restone power when proxying it
+	public byte redStonePowerCost = 1; //How much to reduce the restone power when proxying it
 	private byte[] weakRedstone = new byte[sideCount];
 	private byte[] strongRedstone = new byte[sideCount];
     public boolean gotPower;

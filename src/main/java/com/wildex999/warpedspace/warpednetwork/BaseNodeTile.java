@@ -86,8 +86,6 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 		if(worldObj.isRemote)
 			return;
 		
-		ModLog.logger.info("Network Card Update");
-		
 		if(stackNetworkCard == null)
 		{
 			if(currentNetwork != null)
@@ -198,7 +196,7 @@ public abstract class BaseNodeTile extends BaseNetworkInventoryTile implements I
 		if(relay.addNode(currentNetwork, this))
 		{
 			currentRelay = relay;
-			ModLog.logger.info("Joined relay: " + relay);
+			//ModLog.logger.info("Joined relay: " + relay);
 			if(currentRelay.isNetworkReachable())
 				isReachable = true;
 			return true;

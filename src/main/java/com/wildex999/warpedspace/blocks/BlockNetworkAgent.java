@@ -92,9 +92,16 @@ public class BlockNetworkAgent extends BlockBase {
 		return true;
 	}
 	
+	@Override
 	public boolean canPlaceTorchOnTop(World world, int x, int y, int z) {
 		return true;
 	}
+	
+	@Override
+	public boolean canConnectRedstone(IBlockAccess world, int x, int y, int z, int side) {
+		return true;
+	}
+	
 	
 
 }

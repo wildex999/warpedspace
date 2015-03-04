@@ -74,7 +74,7 @@ public class RendererNetworkInterface extends RendererTileBase {
 		//}
 
         //ModLog.logger.info("TEST1");
-        Block prevBlock = worldObj.getBlock(tileX, tileY, tileZ);
+        //Block prevBlock = worldObj.getBlock(tileX, tileY, tileZ);
         if(tileInterface.proxyTile != null) {
             worldObj.setTileEntity(tileX, tileY, tileZ, tileInterface.proxyTile);
         }

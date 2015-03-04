@@ -109,6 +109,8 @@ public class RelayNodeTile extends BaseNodeTile implements INetworkRelay {
 	public void eventNetworkDisconnect() {
 		super.eventNetworkDisconnect();
 		
+		//TODO: Limit propagation speed to not kill server with large networks(Say, max n disconnect events per tick, rest have to be queued)
+		//if(nodesUpdated < nodeList.size && nodeList.size < maxNodesPerTick) 
 		for(INode node : nodeList)
 			node.eventNetworkDisconnect();
 	}
@@ -118,6 +120,7 @@ public class RelayNodeTile extends BaseNodeTile implements INetworkRelay {
 		super.eventNetworkReconnect();
 		
 		//We now have a full path to the controller, and are reachable
+		//TODO: Same as for disconnect, limit propagation speed to spare CPU time per tick
 		for(INode node : nodeList)
 			node.eventNetworkReconnect();
 	}

@@ -107,7 +107,7 @@ public abstract class MessageBase implements IMessage {
 		for(QueuedMessage message : queueList) {
             if(message.packet != null) {
                 message.player.playerNetServerHandler.sendPacket(message.packet);
-                ModLog.logger.info("Send packet: " + message.packet);
+                //ModLog.logger.info("Send packet: " + message.packet);
             }
             else if(message.player != null)
                 Networking.getChannel().sendTo(message.message, message.player);

@@ -74,9 +74,9 @@ public class NetworkInterfaceGui implements IGuiHandler {
 		private static final short backgroundHeightTiles = 215;
 		
 		private final String defaultNoTile = "<No Tile>";
-		private static int colorGotTile = 0x47D147;
-		private static int colorOfflineTile = 0xFFA500;
-		private static int colorInvalidTile = 0xFF6600;
+		public static int colorGotTile = 0x47D147;
+		public static int colorOfflineTile = 0xFFA500;
+		public static int colorInvalidTile = 0xFF6600;
 		
 		private TileNetworkInterface tile;
 		private InterfaceContainer container;
@@ -256,7 +256,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 		public void addTile(String entryName, String tileName, byte tileMeta, long gid, boolean active) {
 			if(tilesList == null)
 				return;
-			tilesList.addEntry(new GuiListEntryTile(entryName, tileName, tileMeta, gid));
+			tilesList.addEntry(new GuiListEntryTile(entryName, tileName, tileMeta, gid, active));
 		}
 		
 		//Remove tile from TileList
@@ -414,7 +414,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 				}
 				else if(button == buttonOpenTileGui)
 				{
-					if(networkState == Messages.online && entryState == Messages.online)
+					if(networkState == Messages.online)
 					{
 						GuiListEntry entry = tilesList.selectedEntry;
 						if(entry != null)
@@ -422,9 +422,12 @@ public class NetworkInterfaceGui implements IGuiHandler {
 							if(entry instanceof GuiListEntryTile)
 							{
 								GuiListEntryTile tileEntry = (GuiListEntryTile)entry;
-								GuiHandler.setPreviousTileGui(this, thisId, tile);
-								MessageBase messageActivate = new MessageActivate(tile, tileEntry.gid, thisId == PortableNetworkInterfaceGui.GUI_ID);
-								messageActivate.sendToServer();
+								if(tileEntry.active)
+								{
+									GuiHandler.setPreviousTileGui(this, thisId, tile);
+									MessageBase messageActivate = new MessageActivate(tile, tileEntry.gid, thisId == PortableNetworkInterfaceGui.GUI_ID);
+									messageActivate.sendToServer();
+								}
 							}
 						}
 					}
@@ -505,9 +508,7 @@ public class NetworkInterfaceGui implements IGuiHandler {
 			if(showTiles)
 			{
 				//Scroll Wheel
-				int scroll = Mouse.getDWheel();
-                ModLog.logger.info("Scroll: " + scroll);
-				
+				int scroll = Mouse.getEventDWheel();
 				if(scroll != 0)
 					tilesList.onScroll(scroll);
 			}

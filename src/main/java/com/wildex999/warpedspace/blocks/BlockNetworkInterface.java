@@ -40,6 +40,7 @@ public class BlockNetworkInterface extends BlockBase {
 	@Override
 	public TileEntity createTileEntity(World world, int meta)
 	{
+		//ModLog.logger.info("CREATE INTERFACE TILE ENTITY: " + world.isRemote);
 		return new TileNetworkInterface();
 	}
 	
@@ -125,5 +126,15 @@ public class BlockNetworkInterface extends BlockBase {
 	@Override
 	public boolean canConnectRedstone(IBlockAccess world, int x, int y, int z, int side) {
 		return true;
+	}
+	
+	//---LIGHT---//
+	@Override
+	public int getLightValue(IBlockAccess world, int x, int y, int z) {
+		TileNetworkInterface tile = (TileNetworkInterface)world.getTileEntity(x, y, z);
+		if(tile == null)
+			return 0;
+		//ModLog.logger.info("LIGHT: " + tile.getLightManager().getLightLevel());
+		return tile.getLightManager().getLightLevel();
 	}
 }

@@ -39,7 +39,7 @@ public class RenderNetworkInterfaceBlock implements ISimpleBlockRenderingHandler
 	@Override
 	public boolean renderWorldBlock(IBlockAccess world, int x, int y, int z,
 			Block block, int modelId, RenderBlocks renderer) {
-
+		
 		World worldObj = Minecraft.getMinecraft().theWorld;
 		TileEntity baseTile = worldObj.getTileEntity(x, y, z);
 		if(baseTile == null || !(baseTile instanceof TileNetworkInterface)) {
@@ -50,7 +50,6 @@ public class RenderNetworkInterfaceBlock implements ISimpleBlockRenderingHandler
 		TileNetworkInterface tileInterface = (TileNetworkInterface)baseTile;
 		Block hostBlock = tileInterface.hostBlock;
         int hostMeta = tileInterface.hostMeta;
-		
 		if(hostBlock == null || hostBlock == block) {
             fillBuffer();
             return true;
@@ -95,10 +94,10 @@ public class RenderNetworkInterfaceBlock implements ISimpleBlockRenderingHandler
         Block prevBlock = worldObj.getBlock(x, y, z);
 
 
-        ModLog.logger.info("TEST2: " + hostBlock + " M: " + hostMeta + " RenderType: " + hostBlock.getRenderType() + " RenderPass: " + hostBlock.getRenderBlockPass());
+        //ModLog.logger.info("TEST2: " + hostBlock + " M: " + hostMeta + " RenderType: " + hostBlock.getRenderType() + " RenderPass: " + hostBlock.getRenderBlockPass());
         worldObj.setBlock(x, y, z, hostBlock, hostMeta, 0);
         if(tileInterface.proxyTile != null) {
-            tileInterface.proxyTile.validate();
+            tileInterface.proxyTile.validate(); //Make sure we can add it
             worldObj.setTileEntity(x, y, z, tileInterface.proxyTile);
         }
 
@@ -114,11 +113,9 @@ public class RenderNetworkInterfaceBlock implements ISimpleBlockRenderingHandler
         Tessellator.instance = originalTessellator;
 
         worldObj.setBlock(x, y, z, prevBlock, hostMeta, 4);
-        if(tileInterface.proxyTile != null) {
-            tileInterface.validate();
-            worldObj.setTileEntity(x, y, z, tileInterface);
-            tileInterface.proxyTile.validate();
-        }
+        //setBlock will also remove any existing tileEntity, so we have to re-validate and set our existing tileEntity
+        tileInterface.validate();
+        worldObj.setTileEntity(x, y, z, tileInterface);
 
 		return true;
 	}
